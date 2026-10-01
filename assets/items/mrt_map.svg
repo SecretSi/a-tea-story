@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="740" height="1020" viewBox="0 0 740 1020" role="img" aria-labelledby="title desc">
+  <title id="title">Taipei Metro key-station schematic</title>
+  <desc id="desc">A schematic of selected stops on Taipei Metro's six main lines. Not to scale.</desc>
+  <rect width="740" height="1020" fill="#f8f4ea"/>
+  <rect x="14" y="14" width="712" height="992" rx="8" fill="none" stroke="#2b3f4f" stroke-width="5"/>
+  <text x="36" y="58" font-family="Arial,sans-serif" font-size="31" font-weight="700" fill="#243746">TAIPEI METRO</text>
+  <text x="38" y="86" font-family="Arial,sans-serif" font-size="15" fill="#5c6870">KEY STATIONS · SCHEMATIC · NOT TO SCALE</text>
+  <g font-family="Arial,sans-serif" fill="#293640">
+    <g transform="translate(0 145)">
+      <rect x="30" y="-18" width="44" height="28" rx="5" fill="#e3002c"/><text x="52" y="2" text-anchor="middle" font-size="17" font-weight="700" fill="#fff">R</text>
+      <text x="84" y="2" font-size="15" font-weight="700">Tamsui–Xinyi</text><path d="M260 0H700" stroke="#e3002c" stroke-width="8" stroke-linecap="round"/>
+      <g font-size="12" text-anchor="middle"><circle cx="275" cy="0" r="9" fill="#fff" stroke="#e3002c" stroke-width="5"/><text x="275" y="27">Tamsui</text><circle cx="360" cy="0" r="9" fill="#fff" stroke="#e3002c" stroke-width="5"/><text x="360" y="27">Shilin</text><circle cx="445" cy="0" r="9" fill="#fff" stroke="#e3002c" stroke-width="5"/><text x="445" y="27">Taipei<tspan x="445" dy="14">Main</tspan></text><circle cx="530" cy="0" r="9" fill="#fff" stroke="#e3002c" stroke-width="5"/><text x="530" y="27">CKS<tspan x="530" dy="14">Memorial</tspan></text><circle cx="615" cy="0" r="9" fill="#fff" stroke="#e3002c" stroke-width="5"/><text x="615" y="27">Daan</text><circle cx="700" cy="0" r="9" fill="#fff" stroke="#e3002c" stroke-width="5"/><text x="700" y="27">Xiangshan</text></g>
+    </g>
+    <g transform="translate(0 285)">
+      <rect x="30" y="-18" width="44" height="28" rx="5" fill="#008659"/><text x="52" y="2" text-anchor="middle" font-size="17" font-weight="700" fill="#fff">G</text>
+      <text x="84" y="2" font-size="15" font-weight="700">Songshan–Xindian</text><path d="M260 0H700" stroke="#008659" stroke-width="8" stroke-linecap="round"/>
+      <g font-size="12" text-anchor="middle"><circle cx="275" cy="0" r="9" fill="#fff" stroke="#008659" stroke-width="5"/><text x="275" y="27">Songshan</text><circle cx="360" cy="0" r="9" fill="#fff" stroke="#008659" stroke-width="5"/><text x="360" y="27">Nanjing<tspan x="360" dy="14">Fuxing</tspan></text><circle cx="445" cy="0" r="9" fill="#fff" stroke="#008659" stroke-width="5"/><text x="445" y="27">Taipei<tspan x="445" dy="14">Main</tspan></text><circle cx="530" cy="0" r="9" fill="#fff" stroke="#008659" stroke-width="5"/><text x="530" y="27">Ximen</text><circle cx="615" cy="0" r="9" fill="#fff" stroke="#008659" stroke-width="5"/><text x="615" y="27">Gongguan</text><circle cx="700" cy="0" r="9" fill="#fff" stroke="#008659" stroke-width="5"/><text x="700" y="27">Xindian</text></g>
+    </g>
+    <g transform="translate(0 425)">
+      <rect x="30" y="-18" width="44" height="28" rx="5" fill="#f8b61c"/><text x="52" y="2" text-anchor="middle" font-size="17" font-weight="700" fill="#243746">O</text>
+      <text x="84" y="2" font-size="15" font-weight="700">Zhonghe–Xinlu</text><path d="M260 0H700" stroke="#f8b61c" stroke-width="8" stroke-linecap="round"/>
+      <g font-size="12" text-anchor="middle"><circle cx="275" cy="0" r="9" fill="#fff" stroke="#f8b61c" stroke-width="5"/><text x="275" y="27">Luzhou</text><circle cx="380" cy="0" r="9" fill="#fff" stroke="#f8b61c" stroke-width="5"/><text x="380" y="27">Daqiaotou</text><circle cx="485" cy="0" r="9" fill="#fff" stroke="#f8b61c" stroke-width="5"/><text x="485" y="27">Dongmen</text><circle cx="590" cy="0" r="9" fill="#fff" stroke="#f8b61c" stroke-width="5"/><text x="590" y="27">Guting</text><circle cx="700" cy="0" r="9" fill="#fff" stroke="#f8b61c" stroke-width="5"/><text x="700" y="27">Nanshijiao</text></g>
+    </g>
+    <g transform="translate(0 565)">
+      <rect x="30" y="-18" width="44" height="28" rx="5" fill="#0070bd"/><text x="52" y="2" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">BL</text>
+      <text x="84" y="2" font-size="15" font-weight="700">Bannan</text><path d="M260 0H700" stroke="#0070bd" stroke-width="8" stroke-linecap="round"/>
+      <g font-size="12" text-anchor="middle"><circle cx="275" cy="0" r="9" fill="#fff" stroke="#0070bd" stroke-width="5"/><text x="275" y="27">Nangang<tspan x="275" dy="14">Exhibition</tspan></text><circle cx="360" cy="0" r="9" fill="#fff" stroke="#0070bd" stroke-width="5"/><text x="360" y="27">City Hall</text><circle cx="445" cy="0" r="9" fill="#fff" stroke="#0070bd" stroke-width="5"/><text x="445" y="27">Taipei<tspan x="445" dy="14">Main</tspan></text><circle cx="530" cy="0" r="9" fill="#fff" stroke="#0070bd" stroke-width="5"/><text x="530" y="27">Ximen</text><circle cx="615" cy="0" r="9" fill="#fff" stroke="#0070bd" stroke-width="5"/><text x="615" y="27">Banqiao</text><circle cx="700" cy="0" r="9" fill="#fff" stroke="#0070bd" stroke-width="5"/><text x="700" y="27">Dingpu</text></g>
+    </g>
+    <g transform="translate(0 705)">
+      <rect x="30" y="-18" width="44" height="28" rx="5" fill="#c48c31"/><text x="52" y="2" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">BR</text>
+      <text x="84" y="2" font-size="15" font-weight="700">Wenhu</text><path d="M260 0H700" stroke="#c48c31" stroke-width="8" stroke-linecap="round"/>
+      <g font-size="12" text-anchor="middle"><circle cx="275" cy="0" r="9" fill="#fff" stroke="#c48c31" stroke-width="5"/><text x="275" y="27">Taipei Zoo</text><circle cx="380" cy="0" r="9" fill="#fff" stroke="#c48c31" stroke-width="5"/><text x="380" y="27">Zhongxiao<tspan x="380" dy="14">Fuxing</tspan></text><circle cx="485" cy="0" r="9" fill="#fff" stroke="#c48c31" stroke-width="5"/><text x="485" y="27">Nanjing<tspan x="485" dy="14">Fuxing</tspan></text><circle cx="590" cy="0" r="9" fill="#fff" stroke="#c48c31" stroke-width="5"/><text x="590" y="27">Songshan<tspan x="590" dy="14">Airport</tspan></text><circle cx="700" cy="0" r="9" fill="#fff" stroke="#c48c31" stroke-width="5"/><text x="700" y="27">Nangang<tspan x="700" dy="14">Exhibition</tspan></text></g>
+    </g>
+    <g transform="translate(0 845)">
+      <rect x="30" y="-18" width="44" height="28" rx="5" fill="#ffdb00"/><text x="52" y="2" text-anchor="middle" font-size="17" font-weight="700" fill="#243746">Y</text>
+      <text x="84" y="2" font-size="15" font-weight="700">Circular</text><path d="M260 0H700" stroke="#d3a900" stroke-width="8" stroke-linecap="round"/>
+      <g font-size="12" text-anchor="middle"><circle cx="275" cy="0" r="9" fill="#fff" stroke="#d3a900" stroke-width="5"/><text x="275" y="27">New Taipei<tspan x="275" dy="14">Industrial Park</tspan></text><circle cx="415" cy="0" r="9" fill="#fff" stroke="#d3a900" stroke-width="5"/><text x="415" y="27">Banqiao</text><circle cx="555" cy="0" r="9" fill="#fff" stroke="#d3a900" stroke-width="5"/><text x="555" y="27">Jing'an</text><circle cx="700" cy="0" r="9" fill="#fff" stroke="#d3a900" stroke-width="5"/><text x="700" y="27">Dapinglin</text></g>
+    </g>
+  </g>
+  <text x="38" y="966" font-family="Arial,sans-serif" font-size="14" fill="#58646c">Selected stops only. Use station signs for local guidance.</text>
+</svg>
