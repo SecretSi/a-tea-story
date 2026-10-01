@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>A Tea Story — Taipei Map</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-family: sans-serif;
+  }
+  #wrap {
+    position: relative;
+  }
+  canvas {
+    border: 2px solid #333;
+    display: block;
+  }
+  #hint {
+    color: #ccc;
+    text-align: center;
+    font-size: 13px;
+    margin-top: 6px;
+  }
+  #intro {
+    position: relative;
+    width: 1280px;
+    height: 800px;
+    background: #000;
+  }
+  #intro video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  #intro-prompt {
+    position: absolute;
+    bottom: 24px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: #fff;
+    font-size: 20px;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  #intro-skip {
+    position: absolute;
+    right: 24px;
+    bottom: 22px;
+    border: 1px solid #f3dba0;
+    border-radius: 5px;
+    background: rgba(140,32,48,0.9);
+    color: #fff3d2;
+    padding: 10px 14px;
+    cursor: pointer;
+    font: inherit;
+    font-weight: bold;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+  .hidden {
+    display: none !important;
+  }
+
+  #select {
+    width: 1280px;
+    height: 800px;
+    background: #3a322c;
+    color: #f3e3c3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 30px;
+  }
+  #select h1 {
+    font-size: 48px;
+    letter-spacing: 4px;
+    margin: 0 0 36px;
+    color: #f3dba0;
+    text-shadow: 3px 3px 0 #1c1320;
+  }
+  #select-cards {
+    display: flex;
+    gap: 36px;
+  }
+  .card {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: inherit;
+    font-family: inherit;
+  }
+  .card-frame {
+    width: 320px;
+    height: 360px;
+    overflow: hidden;
+    border: 4px solid #1c2a4a;
+    box-shadow: 0 0 0 3px #8c2030 inset;
+    background: #000;
+  }
+  .card-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 15%;
+    transform: scale(1.3);
+    transform-origin: top center;
+  }
+  .card-label {
+    margin-top: 10px;
+    background: #1c2a4a;
+    border: 2px solid #8c2030;
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 15px;
+    letter-spacing: 1px;
+  }
+  .card:hover .card-frame {
+    box-shadow: 0 0 0 3px #f3dba0 inset;
+  }
+
+  #interact-prompt {
+    position: absolute;
+    left: 50%;
+    bottom: 70px;
+    transform: translateX(-50%);
+    background: rgba(20, 14, 10, 0.85);
+    color: #f3dba0;
+    border: 2px solid #8c2030;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    pointer-events: none;
+  }
+
+  #dialogue-box {
+    position: absolute;
+    left: 50%;
+    bottom: 40px;
+    transform: translateX(-50%);
+    width: 900px;
+    background: rgba(20, 14, 10, 0.92);
+    color: #f3e3c3;
+    border: 3px solid #8c2030;
+    border-radius: 8px;
+    padding: 16px 22px;
+    box-sizing: border-box;
+    pointer-events: none;
+  }
+  #dialogue-box .speaker {
+    color: #f3dba0;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  #dialogue-box .line {
+    font-size: 16px;
+    line-height: 1.4;
+    white-space: pre-line;
+  }
+
+  #travel-panel {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(1000px, calc(100% - 64px));
+    max-height: 680px;
+    background: rgba(18, 16, 15, 0.96);
+    color: #f3e3c3;
+    border: 3px solid #8c2030;
+    border-radius: 8px;
+    box-shadow: 0 18px 48px rgba(0,0,0,0.55);
+    overflow: hidden;
+    z-index: 10;
+  }
+  #travel-panel header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 18px;
+    background: #251b18;
+    border-bottom: 1px solid rgba(243,219,160,0.22);
+  }
+  #travel-panel h2 {
+    margin: 0;
+    color: #f3dba0;
+    font-size: 24px;
+    letter-spacing: 1px;
+  }
+  #travel-close {
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(243,219,160,0.48);
+    border-radius: 4px;
+    background: transparent;
+    color: #f3dba0;
+    cursor: pointer;
+    font: inherit;
+    line-height: 1;
+  }
+  #travel-content {
+    max-height: 520px;
+    overflow-y: auto;
+    padding: 16px 18px 18px;
+    box-sizing: border-box;
+  }
+  .travel-category {
+    margin: 0 0 18px;
+  }
+  .travel-category h3 {
+    margin: 0 0 9px;
+    color: #f3dba0;
+    font-size: 16px;
+    letter-spacing: 0.8px;
+  }
+  .travel-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .travel-destination {
+    min-height: 62px;
+    border: 1px solid rgba(243,219,160,0.34);
+    border-radius: 6px;
+    background: #211815;
+    color: #f8ecd0;
+    padding: 8px 10px;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+  }
+  .travel-destination:hover,
+  .travel-destination:focus {
+    outline: 2px solid rgba(243,219,160,0.5);
+    outline-offset: 1px;
+    background: #2d211c;
+  }
+  .travel-language {
+    display: block;
+    color: #f3dba0;
+    font-weight: bold;
+    font-size: 13px;
+    margin-bottom: 3px;
+  }
+  .travel-city {
+    display: block;
+    line-height: 1.25;
+    font-size: 15px;
+  }
+  #travel-status {
+    min-height: 21px;
+    padding: 12px 18px 16px;
+    border-top: 1px solid rgba(243,219,160,0.18);
+    color: #d8c7a8;
+    font-size: 14px;
+  }
+
+  #takumi-chat {
+    position: absolute;
+    right: 24px;
+    bottom: 36px;
+    width: 390px;
+    max-height: 520px;
+    background: rgba(18, 16, 15, 0.94);
+    color: #f3e3c3;
+    border: 3px solid #8c2030;
+    border-radius: 8px;
+    box-shadow: 0 14px 36px rgba(0,0,0,0.45);
+    overflow: hidden;
+    font-size: 15px;
+  }
+  #takumi-chat header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: #251b18;
+    color: #f3dba0;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(243,219,160,0.22);
+    font-weight: bold;
+    letter-spacing: 0.7px;
+  }
+  #takumi-close {
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(243,219,160,0.45);
+    border-radius: 4px;
+    background: transparent;
+    color: #f3dba0;
+    cursor: pointer;
+    font: inherit;
+    line-height: 1;
+  }
+  #takumi-messages {
+    height: 320px;
+    overflow-y: auto;
+    padding: 14px;
+    box-sizing: border-box;
+  }
+  .takumi-message {
+    margin: 0 0 12px;
+    line-height: 1.38;
+  }
+  .takumi-message .name {
+    display: block;
+    color: #f3dba0;
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+  }
+  .takumi-message.user {
+    color: #d8ecff;
+  }
+  .takumi-message.takumi {
+    color: #f3e3c3;
+  }
+  #takumi-form {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    background: #201614;
+    border-top: 1px solid rgba(243,219,160,0.18);
+  }
+  #takumi-input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid rgba(243,219,160,0.42);
+    border-radius: 5px;
+    background: #100d0c;
+    color: #f8ecd0;
+    padding: 9px 10px;
+    font: inherit;
+  }
+  #takumi-input:focus {
+    outline: 2px solid rgba(243,219,160,0.45);
+    outline-offset: 1px;
+  }
+  #takumi-send {
+    border: 1px solid #f3dba0;
+    border-radius: 5px;
+    background: #8c2030;
+    color: #fff3d2;
+    padding: 0 13px;
+    cursor: pointer;
+    font: inherit;
+    font-weight: bold;
+  }
+  #takumi-input:disabled,
+  #takumi-send:disabled {
+    opacity: 0.62;
+    cursor: wait;
+  }
+  #scroll-hud {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 5;
+    width: 170px;
+    height: 92px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+  }
+  #scroll-hud:hover,
+  #scroll-hud:focus {
+    filter: drop-shadow(0 0 8px rgba(243,219,160,0.75));
+    outline: none;
+  }
+  #scroll-hud img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+  #scroll-hud .fallback {
+    width: 42px;
+    height: 30px;
+    border-radius: 12px;
+    background: #f3dba0;
+    box-shadow: inset 0 0 0 4px #8c6b38;
+  }
+  #quest-hud {
+    position: absolute;
+    top: 16px;
+    left: 174px;
+    z-index: 5;
+    width: 116px;
+    height: 92px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+  }
+  #quest-hud:hover,
+  #quest-hud:focus {
+    filter: drop-shadow(0 0 8px rgba(243,219,160,0.75));
+    outline: none;
+  }
+  #quest-hud img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+  #quest-hud .fallback {
+    width: 52px;
+    height: 62px;
+    border: 4px solid #5c2b17;
+    border-radius: 6px;
+    background:
+      linear-gradient(90deg, rgba(255,238,164,0.28) 0 44%, rgba(92,43,23,0.5) 45% 55%, rgba(255,238,164,0.18) 56%),
+      #8c2030;
+    box-shadow: inset -5px -5px 0 rgba(50,24,13,0.32), inset 5px 5px 0 rgba(255,226,132,0.28);
+  }
+  #vocab-panel {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(920px, calc(100% - 72px));
+    height: min(690px, calc(100% - 72px));
+    color: #3d2417;
+    border: none;
+    overflow: visible;
+    z-index: 12;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 20px 26px rgba(0,0,0,0.62));
+  }
+  #vocab-panel::before,
+  #vocab-panel::after {
+    content: "";
+    position: absolute;
+    left: -36px;
+    right: -36px;
+    height: 58px;
+    border: 4px solid #542611;
+    background:
+      linear-gradient(90deg, #4b1e10 0 8%, #8a4720 8% 15%, #cf8d3d 15% 45%, #f0bf62 45% 55%, #cf8d3d 55% 85%, #8a4720 85% 92%, #4b1e10 92% 100%);
+    box-shadow:
+      inset 0 8px 0 rgba(255,236,160,0.36),
+      inset 0 -12px 0 rgba(78,26,8,0.32),
+      0 8px 0 rgba(0,0,0,0.24);
+    z-index: 2;
+  }
+  #vocab-panel::before {
+    top: 0;
+  }
+  #vocab-panel::after {
+    bottom: 0;
+  }
+  #vocab-scroll-sheet {
+    position: absolute;
+    left: 34px;
+    right: 34px;
+    top: 38px;
+    bottom: 38px;
+    padding: 54px 58px 50px;
+    box-sizing: border-box;
+    background:
+      linear-gradient(90deg, rgba(92,37,12,0.46), rgba(92,37,12,0) 10%, rgba(92,37,12,0) 90%, rgba(92,37,12,0.46)),
+      linear-gradient(180deg, rgba(121,54,19,0.3), rgba(255,244,185,0.2) 18%, rgba(247,218,128,0.18) 80%, rgba(98,42,14,0.34)),
+      #e8bc63;
+    border-left: 10px solid #7b3717;
+    border-right: 10px solid #7b3717;
+    box-shadow:
+      inset 0 0 0 4px #b66a2c,
+      inset 24px 0 0 rgba(110,45,16,0.22),
+      inset -24px 0 0 rgba(110,45,16,0.22);
+    clip-path: polygon(2% 0, 98% 0, 99% 4%, 98% 10%, 100% 18%, 98% 28%, 99% 40%, 98% 51%, 100% 62%, 98% 75%, 99% 90%, 97% 100%, 3% 100%, 1% 94%, 2% 84%, 0 72%, 2% 60%, 1% 48%, 2% 37%, 0 25%, 2% 13%);
+    z-index: 1;
+  }
+  #vocab-panel header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0 0 10px;
+    border-bottom: 3px solid rgba(96,45,18,0.45);
+  }
+  #vocab-panel h2 {
+    margin: 0;
+    color: #5c2b17;
+    font-size: 24px;
+    letter-spacing: 0;
+    text-shadow: 2px 2px 0 rgba(255,238,164,0.72);
+  }
+  #vocab-close {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #5c2b17;
+    border-radius: 0;
+    background: #c77a2a;
+    color: #32180d;
+    cursor: pointer;
+    font: inherit;
+    font-weight: bold;
+    line-height: 1;
+    box-shadow: inset -3px -3px 0 rgba(70,24,7,0.28), inset 3px 3px 0 rgba(255,226,132,0.45);
+  }
+  #vocab-content {
+    max-height: calc(100% - 52px);
+    overflow-y: auto;
+    padding: 12px 4px 2px;
+    box-sizing: border-box;
+    scrollbar-color: #7b3717 #e8bc63;
+  }
+  #scroll-rack-panel {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(1040px, calc(100% - 72px));
+    height: min(700px, calc(100% - 72px));
+    z-index: 13;
+    color: #f8ecd0;
+    background:
+      linear-gradient(180deg, rgba(50,28,18,0.96), rgba(24,17,13,0.98)),
+      #24160f;
+    border: 5px solid #7b3717;
+    border-radius: 8px;
+    box-shadow:
+      inset 0 0 0 4px rgba(240,191,98,0.3),
+      0 24px 56px rgba(0,0,0,0.62);
+    overflow: hidden;
+  }
+  #scroll-rack-panel header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 18px;
+    background: #32180d;
+    border-bottom: 3px solid rgba(240,191,98,0.45);
+  }
+  #scroll-rack-panel h2 {
+    margin: 0;
+    color: #f3dba0;
+    font-size: 25px;
+    letter-spacing: 0;
+  }
+  #scroll-rack-close {
+    width: 34px;
+    height: 34px;
+    border: 2px solid #f3dba0;
+    border-radius: 4px;
+    background: #8c2030;
+    color: #fff3d2;
+    cursor: pointer;
+    font: inherit;
+    font-weight: bold;
+    line-height: 1;
+  }
+  #scroll-rack-content {
+    height: calc(100% - 67px);
+    overflow-y: auto;
+    padding: 18px 22px 24px;
+    box-sizing: border-box;
+    scrollbar-color: #c77a2a #24160f;
+  }
+  .scroll-rack-status {
+    margin: 0 0 14px;
+    color: #d8c7a8;
+    font-size: 14px;
+    line-height: 1.35;
+  }
+  .scroll-rack-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .scroll-pack {
+    min-height: 86px;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    border: 2px solid rgba(243,219,160,0.35);
+    border-radius: 6px;
+    background: rgba(69,38,20,0.78);
+    color: #f8ecd0;
+    padding: 10px;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+    box-shadow: inset 0 0 0 2px rgba(255,226,132,0.08);
+  }
+  .scroll-pack.current {
+    border-color: #f3dba0;
+    background: rgba(140,32,48,0.74);
+  }
+  .scroll-pack.complete {
+    border-color: #77b86a;
+  }
+  .scroll-pack.locked {
+    opacity: 0.58;
+  }
+  .scroll-pack:hover,
+  .scroll-pack:focus {
+    outline: 2px solid rgba(243,219,160,0.7);
+    outline-offset: 1px;
+  }
+  .scroll-pack-icon {
+    width: 38px;
+    height: 56px;
+    border: 3px solid #6b2d12;
+    border-radius: 17px 17px 5px 5px;
+    background:
+      linear-gradient(90deg, #8a4720 0 16%, #f0bf62 16% 84%, #8a4720 84%),
+      #e8bc63;
+    box-shadow: inset 0 0 0 3px rgba(255,238,164,0.34);
+  }
+  .scroll-pack-number {
+    display: block;
+    color: #f3dba0;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .scroll-pack-title {
+    display: block;
+    margin-top: 3px;
+    font-size: 15px;
+    font-weight: bold;
+  }
+  .scroll-pack-progress {
+    display: block;
+    margin-top: 5px;
+    color: #d8c7a8;
+    font-size: 12px;
+    line-height: 1.25;
+  }
+  #mrt-map-panel {
+    position: absolute;
+    inset: 0;
+    z-index: 16;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 8, 7, 0.58);
+    padding: 36px;
+    box-sizing: border-box;
+  }
+  #mrt-map-frame {
+    position: relative;
+    max-width: min(980px, 100%);
+    max-height: 100%;
+    padding: 16px;
+    background: #f8f4ea;
+    border: 5px solid #2f6fb2;
+    border-radius: 6px;
+    box-shadow: 0 22px 54px rgba(0,0,0,0.58);
+  }
+  #mrt-map-frame img {
+    display: block;
+    max-width: 100%;
+    max-height: calc(100vh - 130px);
+    object-fit: contain;
+  }
+  #mrt-map-close {
+    position: absolute;
+    top: -18px;
+    right: -18px;
+    width: 38px;
+    height: 38px;
+    border: 2px solid #f3dba0;
+    border-radius: 4px;
+    background: #8c2030;
+    color: #fff3d2;
+    cursor: pointer;
+    font: inherit;
+    font-weight: bold;
+    line-height: 1;
+  }
+  .vocab-empty {
+    margin: 0 0 10px;
+    color: #633019;
+    line-height: 1.35;
+    font-size: 13px;
+    font-weight: bold;
+  }
+  .vocab-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 12px;
+    counter-reset: vocab-slot;
+  }
+  .vocab-card {
+    border: 2px solid rgba(111,52,21,0.45);
+    border-radius: 0;
+    background: rgba(255,236,153,0.28);
+    padding: 5px 7px 5px 38px;
+    min-height: 42px;
+    box-sizing: border-box;
+    position: relative;
+    box-shadow: inset -2px -2px 0 rgba(118,54,19,0.18), inset 2px 2px 0 rgba(255,241,177,0.34);
+    cursor: pointer;
+  }
+  .vocab-card:hover,
+  .vocab-card:focus {
+    border-color: #7a3d1e;
+    outline: none;
+    box-shadow: inset -2px -2px 0 rgba(118,54,19,0.18), inset 2px 2px 0 rgba(255,241,177,0.34), 0 0 0 2px rgba(122,61,30,0.22);
+  }
+  .vocab-card::before {
+    content: attr(data-slot);
+    position: absolute;
+    left: 7px;
+    top: 7px;
+    width: 24px;
+    color: #7a3d1e;
+    font-size: 11px;
+    font-weight: bold;
+    text-align: right;
+  }
+  .vocab-card.locked {
+    background: rgba(111,52,21,0.12);
+    color: rgba(84,42,22,0.45);
+    cursor: default;
+  }
+  .vocab-hanzi {
+    display: inline-block;
+    color: #32180d;
+    font-weight: bold;
+    font-size: 18px;
+    margin-right: 8px;
+    vertical-align: baseline;
+  }
+  .vocab-pinyin,
+  .vocab-english,
+  .vocab-source {
+    font-size: 12px;
+    line-height: 1.25;
+  }
+  .vocab-pinyin {
+    color: #7a3d1e;
+    font-weight: bold;
+  }
+  .vocab-english {
+    display: block;
+    color: #4c2817;
+  }
+  .vocab-source {
+    display: none;
+  }
+  .vocab-locked-mark {
+    color: rgba(84,42,22,0.46);
+    font-size: 12px;
+    font-weight: bold;
+  }
+  #flashcard-pop {
+    position: absolute;
+    inset: 0;
+    z-index: 18;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 8, 7, 0.54);
+    pointer-events: auto;
+  }
+  #flashcard-pop.hidden {
+    display: none !important;
+  }
+  #flashcard-stage {
+    width: 380px;
+    perspective: 1000px;
+  }
+  #flashcard-card {
+    position: relative;
+    width: 100%;
+    height: 272px;
+    border: 3px solid #8c2030;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 0.42s ease;
+    font: inherit;
+    box-shadow: 0 18px 44px rgba(0,0,0,0.5);
+  }
+  #flashcard-pop.flipped #flashcard-card {
+    transform: rotateY(180deg);
+  }
+  .flashcard-face {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px;
+    box-sizing: border-box;
+    border-radius: 5px;
+    backface-visibility: hidden;
+    background:
+      linear-gradient(180deg, rgba(255,246,201,0.96), rgba(232,188,99,0.96)),
+      #e8bc63;
+    color: #32180d;
+    box-shadow: inset 0 0 0 4px rgba(92,43,23,0.18);
+    text-align: center;
+  }
+  .flashcard-face.back {
+    transform: rotateY(180deg);
+    background:
+      linear-gradient(180deg, rgba(36, 27, 24, 0.98), rgba(18, 16, 15, 0.98)),
+      #201614;
+    color: #f3e3c3;
+  }
+  .flashcard-title {
+    margin: 0;
+    color: #8c2030;
+    font-size: 20px;
+    line-height: 1.15;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .flashcard-kicker {
+    color: #8c2030;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+  }
+  .flashcard-hanzi {
+    color: #32180d;
+    font-size: clamp(38px, 11vw, 72px);
+    font-weight: bold;
+    line-height: 1.05;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .flashcard-hint {
+    color: #633019;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+  .flashcard-pinyin {
+    color: #f3dba0;
+    font-size: 26px;
+    font-weight: bold;
+    text-align: center;
+  }
+  .flashcard-english {
+    color: #f8ecd0;
+    font-size: 20px;
+    line-height: 1.3;
+    text-align: center;
+  }
+  .flashcard-note {
+    color: #d8c7a8;
+    font-size: 13px;
+    line-height: 1.4;
+    text-align: center;
+  }
+  .flashcard-meta {
+    color: #f3dba0;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+  }
+  .flashcard-example {
+    display: block;
+    max-width: 100%;
+    color: #d8c7a8;
+    font-size: 13px;
+    line-height: 1.35;
+    text-align: center;
+  }
+  .flashcard-example-label,
+  .flashcard-example-sentence,
+  .flashcard-example-pinyin,
+  .flashcard-example-translation {
+    display: block;
+  }
+  .flashcard-example-label {
+    color: #f3dba0;
+    font-weight: bold;
+    margin-bottom: 2px;
+  }
+  .flashcard-example-sentence {
+    color: #f8ecd0;
+    font-size: 16px;
+    margin-bottom: 3px;
+  }
+  .flashcard-example-pinyin {
+    color: #f3dba0;
+    margin-bottom: 3px;
+  }
+  .flashcard-example-translation {
+    color: #d8c7a8;
+  }
+  .flashcard-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 12px;
+  }
+  .flashcard-actions button {
+    min-width: 44px;
+    height: 36px;
+    border: 1px solid #f3dba0;
+    border-radius: 5px;
+    background: #8c2030;
+    color: #fff3d2;
+    padding: 0 12px;
+    cursor: pointer;
+    font: inherit;
+    font-weight: bold;
+  }
+  .flashcard-actions button:disabled {
+    opacity: 0.56;
+    cursor: wait;
+  }
+  .flashcard-actions button.secondary {
+    background: #251b18;
+  }
+  #word-lookup {
+    position: absolute;
+    left: 50%;
+    bottom: 92px;
+    transform: translateX(-50%);
+    z-index: 19;
+    width: min(420px, calc(100% - 48px));
+    background: rgba(18, 16, 15, 0.97);
+    color: #f3e3c3;
+    border: 3px solid #8c2030;
+    border-radius: 8px;
+    box-shadow: 0 16px 42px rgba(0,0,0,0.5);
+    padding: 14px;
+    box-sizing: border-box;
+  }
+  #word-lookup header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  #word-lookup-hanzi {
+    color: #f3dba0;
+    font-size: 30px;
+    font-weight: bold;
+    line-height: 1;
+  }
+  #word-lookup-close {
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(243,219,160,0.55);
+    border-radius: 4px;
+    background: transparent;
+    color: #f3dba0;
+    cursor: pointer;
+    font: inherit;
+    line-height: 1;
+  }
+  #word-lookup-pinyin {
+    color: #f3dba0;
+    font-weight: bold;
+    margin: 0 0 4px;
+  }
+  #word-lookup-english,
+  #word-lookup-example {
+    margin: 0 0 8px;
+    color: #f8ecd0;
+    line-height: 1.35;
+    font-size: 14px;
+  }
+  #word-lookup-example {
+    color: #d8c7a8;
+    font-size: 13px;
+  }
+  #word-lookup-speak {
+    border: 1px solid #f3dba0;
+    border-radius: 5px;
+    background: #8c2030;
+    color: #fff3d2;
+    padding: 7px 11px;
+    cursor: pointer;
+    font: inherit;
+    font-weight: bold;
+  }
+  .vocab-token {
+    display: inline;
+    border: 0;
+    border-bottom: 1px solid rgba(243,219,160,0.7);
+    background: transparent;
+    color: #f3dba0;
+    padding: 0;
+    cursor: pointer;
+    font: inherit;
+  }
+  .vocab-token:hover,
+  .vocab-token:focus {
+    color: #fff3d2;
+    outline: none;
+    text-shadow: 0 0 6px rgba(243,219,160,0.8);
+  }
+  #login {
+    width: 1280px;
+    height: 800px;
+    background: #251f1a;
+    color: #f3e3c3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 30px;
+  }
+  #login-box {
+    width: 420px;
+    background: rgba(18, 16, 15, 0.92);
+    border: 3px solid #8c2030;
+    border-radius: 8px;
+    padding: 28px;
+    box-shadow: 0 18px 44px rgba(0,0,0,0.42);
+    text-align: center;
+  }
+  #login-box h1 {
+    margin: 0 0 12px;
+    color: #f3dba0;
+    font-size: 32px;
+    letter-spacing: 1px;
+  }
+  #login-box p {
+    margin: 0 0 22px;
+    line-height: 1.45;
+    color: #d8c7a8;
+  }
+  #login-google,
+  #login-continue,
+  #login-offline {
+    border: 1px solid #f3dba0;
+    border-radius: 5px;
+    background: #8c2030;
+    color: #fff3d2;
+    padding: 11px 16px;
+    cursor: pointer;
+    font: inherit;
+    font-weight: bold;
+    width: 100%;
+  }
+  #login-continue {
+    margin-top: 10px;
+    background: #251b18;
+  }
+  #login-offline {
+    margin-top: 10px;
+    background: #1c2a4a;
+  }
+  #login-google:disabled,
+  #login-continue:disabled,
+  #login-offline:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+  #login-status {
+    min-height: 18px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: #f3dba0;
+  }
+</style>
+</head>
+<body>
+<div id="intro">
+  <video id="intro-video" src="assets/video/intro.mp4" autoplay muted playsinline></video>
+  <div id="intro-prompt">Press SPACE to start</div>
+  <button id="intro-skip" type="button">Skip intro</button>
+</div>
+<div id="login" class="hidden">
+  <div id="login-box">
+    <h1>Sign in</h1>
+    <p>Use your Google account to save your language journey.</p>
+    <button id="login-google" type="button">Continue with Google</button>
+    <button id="login-continue" type="button" class="hidden">Continue</button>
+    <button id="login-offline" type="button">Play offline</button>
+    <div id="login-status">Checking sign-in...</div>
+  </div>
+</div>
+<div id="select" class="hidden">
+  <h1>CHARACTER SELECT</h1>
+  <div id="select-cards">
+    <button class="card" data-character="delinquent">
+      <div class="card-frame"><img src="assets/characters/delinquent_portrait.png" alt="八加九"></div>
+      <div class="card-label">P1: 八加九</div>
+    </button>
+    <button class="card" data-character="grandmother">
+      <div class="card-frame"><img src="assets/characters/grandmother_portrait.png" alt="歐巴桑"></div>
+      <div class="card-label">P2: 歐巴桑</div>
+    </button>
+    <button class="card" data-character="hotchick">
+      <div class="card-frame"><img src="assets/characters/hotchick_portrait.png" alt="辣台妹"></div>
+      <div class="card-label">P3: 辣台妹</div>
+    </button>
+  </div>
+</div>
+<div id="wrap" class="hidden">
+  <canvas id="game" width="1280" height="800"></canvas>
+  <button id="scroll-hud" type="button" aria-label="Open vocabulary scroll">
+    <img src="assets/items/scroll sprite.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'fallback'}))">
+  </button>
+  <button id="quest-hud" type="button" aria-label="Open quest book">
+    <img src="assets/items/quests book.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'fallback'}))">
+  </button>
+  <div id="hint">Move with WASD / Arrow Keys &middot; E to interact &middot; Press M to mute music</div>
+  <div id="interact-prompt" class="hidden"></div>
+  <div id="dialogue-box" class="hidden">
+    <div class="speaker" id="dialogue-speaker"></div>
+    <div class="line" id="dialogue-line"></div>
+  </div>
+  <section id="travel-panel" class="hidden" aria-label="Airport destinations">
+    <header>
+      <h2>Airport Departures</h2>
+      <button id="travel-close" type="button" aria-label="Close airport departures">x</button>
+    </header>
+    <div id="travel-content"></div>
+    <div id="travel-status">Choose a city to begin a language journey.</div>
+  </section>
+  <section id="vocab-panel" class="hidden" aria-label="Vocabulary scroll">
+    <div id="vocab-scroll-sheet">
+      <header>
+        <h2>Language Scrolls</h2>
+        <button id="vocab-close" type="button" aria-label="Close vocabulary scroll">x</button>
+      </header>
+      <div id="vocab-content"></div>
+    </div>
+  </section>
+  <section id="scroll-rack-panel" class="hidden" aria-label="Language scroll rack">
+    <header>
+      <h2>Scroll Rack</h2>
+      <button id="scroll-rack-close" type="button" aria-label="Close scroll rack">x</button>
+    </header>
+    <div id="scroll-rack-content"></div>
+  </section>
+  <section id="mrt-map-panel" class="hidden" aria-label="Taipei MRT map">
+    <div id="mrt-map-frame">
+      <button id="mrt-map-close" type="button" aria-label="Close MRT map">x</button>
+      <img src="assets/items/mrt_map.svg" alt="Taipei MRT map">
+    </div>
+  </section>
+  <section id="takumi-chat" class="hidden" aria-label="Teacher chat">
+    <header>
+      <span>Takuya</span>
+      <button id="takumi-close" type="button" aria-label="Close teacher chat">x</button>
+    </header>
+    <div id="takumi-messages"></div>
+    <form id="takumi-form">
+      <input id="takumi-input" type="text" autocomplete="off" placeholder="Ask Takuya in English..." aria-label="Message Takuya">
+      <button id="takumi-send" type="submit">Send</button>
+    </form>
+  </section>
+  <section id="flashcard-pop" class="hidden" aria-label="New vocabulary flash card">
+    <div id="flashcard-stage">
+      <button id="flashcard-card" type="button" aria-label="Flip vocabulary flash card">
+        <div class="flashcard-face front">
+          <h2 class="flashcard-title">Congratulations!</h2>
+          <span class="flashcard-kicker">You unlocked a new word</span>
+          <span id="flashcard-hanzi" class="flashcard-hanzi"></span>
+          <span class="flashcard-hint">Click to flip</span>
+        </div>
+        <div class="flashcard-face back">
+          <span id="flashcard-pinyin" class="flashcard-pinyin"></span>
+          <span id="flashcard-english" class="flashcard-english"></span>
+          <span id="flashcard-note" class="flashcard-note"></span>
+          <span id="flashcard-example" class="flashcard-example"></span>
+          <span id="flashcard-meta" class="flashcard-meta"></span>
+        </div>
+      </button>
+      <div class="flashcard-actions">
+        <button id="flashcard-speak" type="button" aria-label="Play pronunciation">Voice</button>
+        <button id="flashcard-dictionary" type="button" aria-label="Open dictionary">Dictionary</button>
+        <button id="flashcard-close" class="secondary" type="button" aria-label="Close flash card">Close</button>
+      </div>
+    </div>
+  </section>
+  <section id="word-lookup" class="hidden" aria-label="Vocabulary lookup">
+    <header>
+      <span id="word-lookup-hanzi"></span>
+      <button id="word-lookup-close" type="button" aria-label="Close vocabulary lookup">x</button>
+    </header>
+    <p id="word-lookup-pinyin"></p>
+    <p id="word-lookup-english"></p>
+    <p id="word-lookup-example"></p>
+    <button id="word-lookup-speak" type="button">Voice</button>
+  </section>
+</div>
+<audio id="bgm" src="assets/audio/bgm.mp3" loop preload="auto"></audio>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="game.js?v=92"></script>
+</body>
+</html>
+
+
