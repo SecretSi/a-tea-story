@@ -4093,7 +4093,7 @@ renderCharacterCards();
 initAuth();
 
 window.addEventListener("keydown", (e) => {
-  if (!started && !introDone && e.code === "Space") {
+  if (!started && !loginDone && e.code === "Space") {
     e.preventDefault();
     loginDone = true;
     introVideo.pause();
