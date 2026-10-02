@@ -3910,8 +3910,8 @@ function loop(now) {
 }
 
 // ---- intro -> character select -> game ------------------------------------
-// Space on the intro video advances to character select; picking a card
-// loads that character's sprite onto the player and starts the game loop.
+// Space starts the intro video; after it ends, the player can sign in or
+// continue offline before choosing a character.
 
 const introEl = document.getElementById("intro");
 const introVideo = document.getElementById("intro-video");
@@ -4090,6 +4090,7 @@ flashcardCloseEl.addEventListener("click", (e) => {
 renderTravelDestinations();
 initFlashcardSpeech();
 introSkipEl.addEventListener("click", skipIntroToOfflineSelect);
+introVideo.addEventListener("ended", showLogin);
 loginGoogleEl.addEventListener("click", () => signInWithProvider("google"));
 loginContinueEl.addEventListener("click", showSelect);
 loginOfflineEl.addEventListener("click", playOffline);
@@ -4183,15 +4184,12 @@ window.addEventListener("keydown", (e) => {
   }
 
   if (introDone) return;
-  // autoplay requires the video start muted; unmute on the first user
-  // gesture (any keypress), which browsers allow.
-  if (introVideo.muted) {
-    introVideo.muted = false;
-    introVideo.play();
-  }
   if (e.code === "Space") {
     e.preventDefault();
-    showLogin();
+    if (introVideo.muted) introVideo.muted = false;
+    if (introVideo.paused) {
+      introVideo.play().catch((error) => console.warn("Intro video could not start.", error));
+    }
   }
 });
 
