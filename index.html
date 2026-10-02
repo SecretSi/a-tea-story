@@ -269,7 +269,7 @@
     font-size: 14px;
   }
 
-  #takumi-chat {
+  #teacher-chat {
     position: absolute;
     right: 24px;
     bottom: 36px;
@@ -283,7 +283,7 @@
     overflow: hidden;
     font-size: 15px;
   }
-  #takumi-chat header {
+  #teacher-chat header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -295,7 +295,7 @@
     font-weight: bold;
     letter-spacing: 0.7px;
   }
-  #takumi-close {
+  #teacher-close {
     width: 28px;
     height: 28px;
     border: 1px solid rgba(243,219,160,0.45);
@@ -306,17 +306,17 @@
     font: inherit;
     line-height: 1;
   }
-  #takumi-messages {
+  #teacher-messages {
     height: 320px;
     overflow-y: auto;
     padding: 14px;
     box-sizing: border-box;
   }
-  .takumi-message {
+  .teacher-message {
     margin: 0 0 12px;
     line-height: 1.38;
   }
-  .takumi-message .name {
+  .teacher-message .name {
     display: block;
     color: #f3dba0;
     font-size: 12px;
@@ -325,20 +325,20 @@
     text-transform: uppercase;
     letter-spacing: 0.7px;
   }
-  .takumi-message.user {
+  .teacher-message.user {
     color: #d8ecff;
   }
-  .takumi-message.takumi {
+  .teacher-message.teacher {
     color: #f3e3c3;
   }
-  #takumi-form {
+  #teacher-form {
     display: flex;
     gap: 8px;
     padding: 12px;
     background: #201614;
     border-top: 1px solid rgba(243,219,160,0.18);
   }
-  #takumi-input {
+  #teacher-input {
     flex: 1;
     min-width: 0;
     border: 1px solid rgba(243,219,160,0.42);
@@ -348,11 +348,11 @@
     padding: 9px 10px;
     font: inherit;
   }
-  #takumi-input:focus {
+  #teacher-input:focus {
     outline: 2px solid rgba(243,219,160,0.45);
     outline-offset: 1px;
   }
-  #takumi-send {
+  #teacher-send {
     border: 1px solid #f3dba0;
     border-radius: 5px;
     background: #8c2030;
@@ -362,8 +362,8 @@
     font: inherit;
     font-weight: bold;
   }
-  #takumi-input:disabled,
-  #takumi-send:disabled {
+  #teacher-input:disabled,
+  #teacher-send:disabled {
     opacity: 0.62;
     cursor: wait;
   }
@@ -1168,15 +1168,15 @@
       <img src="assets/items/mrt_map.svg" alt="Taipei MRT map">
     </div>
   </section>
-  <section id="takumi-chat" class="hidden" aria-label="Teacher chat">
+  <section id="teacher-chat" class="hidden" aria-label="Teacher chat">
     <header>
-      <span>Takuya</span>
-      <button id="takumi-close" type="button" aria-label="Close teacher chat">x</button>
+      <span>Teacher</span>
+      <button id="teacher-close" type="button" aria-label="Close teacher chat">x</button>
     </header>
-    <div id="takumi-messages"></div>
-    <form id="takumi-form">
-      <input id="takumi-input" type="text" autocomplete="off" placeholder="Ask Takuya in English..." aria-label="Message Takuya">
-      <button id="takumi-send" type="submit">Send</button>
+    <div id="teacher-messages"></div>
+    <form id="teacher-form">
+      <input id="teacher-input" type="text" autocomplete="off" placeholder="Ask in English..." aria-label="Teacher message">
+      <button id="teacher-send" type="submit">Send</button>
     </form>
   </section>
   <section id="flashcard-pop" class="hidden" aria-label="New vocabulary flash card">

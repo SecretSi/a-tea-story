@@ -62,7 +62,6 @@ const characterImages = {
   delinquent: loadImage("delinquent.png", CHARACTER_PATH),
   grandmother: loadImage("grandmother.png", CHARACTER_PATH),
   hotchick: loadImage("hotchick.png", CHARACTER_PATH),
-  takumi: loadImage("takumi.png", CHARACTER_PATH),
 };
 
 const itemImages = {
@@ -309,13 +308,13 @@ const interactPromptEl = document.getElementById("interact-prompt");
 const dialogueBoxEl = document.getElementById("dialogue-box");
 const dialogueSpeakerEl = document.getElementById("dialogue-speaker");
 const dialogueLineEl = document.getElementById("dialogue-line");
-const takumiChatEl = document.getElementById("takumi-chat");
-const takumiMessagesEl = document.getElementById("takumi-messages");
-const takumiFormEl = document.getElementById("takumi-form");
-const takumiInputEl = document.getElementById("takumi-input");
-const takumiSendEl = document.getElementById("takumi-send");
-const takumiCloseEl = document.getElementById("takumi-close");
-const takumiTitleEl = takumiChatEl.querySelector("header span");
+const teacherChatEl = document.getElementById("teacher-chat");
+const teacherMessagesEl = document.getElementById("teacher-messages");
+const teacherFormEl = document.getElementById("teacher-form");
+const teacherInputEl = document.getElementById("teacher-input");
+const teacherSendEl = document.getElementById("teacher-send");
+const teacherCloseEl = document.getElementById("teacher-close");
+const teacherTitleEl = teacherChatEl.querySelector("header span");
 const travelPanelEl = document.getElementById("travel-panel");
 const travelContentEl = document.getElementById("travel-content");
 const travelStatusEl = document.getElementById("travel-status");
@@ -414,17 +413,6 @@ const TRAVEL_MAP_THEMES = [
 
 let activeTravelDestination = null;
 
-const TAKUMI_VOCAB = [
-  { hanzi: "你好", pinyin: "ni hao", english: "hello", hint: "A friendly greeting." },
-  { hanzi: "謝謝", pinyin: "xie xie", english: "thank you", hint: "Use it when someone helps you." },
-  { hanzi: "多少錢", pinyin: "duo shao qian", english: "how much money", hint: "Useful at a market stall." },
-  { hanzi: "好吃", pinyin: "hao chi", english: "delicious", hint: "Say it when the food is good." },
-  { hanzi: "水", pinyin: "shui", english: "water", hint: "Simple, essential, and everywhere." },
-  { hanzi: "茶", pinyin: "cha", english: "tea", hint: "The soul of the story." },
-  { hanzi: "麵", pinyin: "mian", english: "noodles", hint: "Ramen, beef noodles, anything slurpable." },
-  { hanzi: "夜市", pinyin: "ye shi", english: "night market", hint: "Where you are right now." },
-];
-
 const XIAOCHEN_VOCAB = [
   { hanzi: "捷運", pinyin: "jie yun", english: "MRT", hint: "Taipei's metro system.", keywords: ["mrt", "metro", "train", "subway"] },
   { hanzi: "票", pinyin: "piao", english: "ticket", hint: "Ask for this at the booth.", keywords: ["ticket", "fare"] },
@@ -448,22 +436,6 @@ const ADE_VOCAB = [
 ];
 
 const TEACHERS = {
-  takumi: {
-    id: "takumi",
-    name: "Takuya",
-    agentName: "Takuya",
-    aliases: ["Takuya", "Takumi", "takumi", "takuya"],
-    inputPlaceholder: "Ask Takuya in English...",
-    vocab: TAKUMI_VOCAB,
-    intro: [
-      "Welcome to the night market. Type in English, and I will teach you a little Mandarin as we chat.",
-      "First word: 夜市 (ye shi) means night market.",
-    ],
-    defaultReply: (entry) => `Got it. While we talk, remember "${entry.hanzi}" (${entry.pinyin}) means "${entry.english}". ${entry.hint}`,
-    exampleReply: (entry) => `Sure. Try this: "${entry.hanzi}" means "${entry.english}". In English you might say, "This is ${entry.english}." Keep it simple first.`,
-    quizReply: (entry) => `Tiny quiz: what does "${entry.hanzi}" mean? Hint: ${entry.hint}`,
-    turn: 0,
-  },
   xiaochen: {
     id: "xiaochen",
     name: "小陳",
@@ -498,7 +470,7 @@ const TEACHERS = {
   },
 };
 
-let takumiChatOpen = false;
+let teacherChatOpen = false;
 let activeTeacherId = null;
 let teacherChatBusy = false;
 const teacherChatHistory = {};
@@ -1074,7 +1046,7 @@ function openScrollRack() {
   hideDialogue();
   closeWordLookup();
   closeTravelPanel();
-  closeTakumiChat();
+  closeTeacherChat();
   closeVocabularyScroll();
   renderScrollRack();
   scrollRackPanelEl.classList.remove("hidden");
@@ -1091,7 +1063,7 @@ function openMrtMapPanel() {
   hideDialogue();
   closeWordLookup();
   closeTravelPanel();
-  closeTakumiChat();
+  closeTeacherChat();
   closeVocabularyScroll();
   closeScrollRack();
   mrtMapPanelEl.classList.remove("hidden");
@@ -1108,7 +1080,7 @@ async function openVocabularyScroll(packNumber = vocabProgress.packNumber) {
   hideDialogue();
   closeWordLookup();
   closeTravelPanel();
-  closeTakumiChat();
+  closeTeacherChat();
   closeScrollRack();
   closeMrtMapPanel();
   const requestedPack = Math.max(1, Number(packNumber || vocabProgress.packNumber || 1));
@@ -1616,7 +1588,7 @@ function openTravelPanel() {
   hidePrompt();
   hideDialogue();
   closeWordLookup();
-  closeTakumiChat();
+  closeTeacherChat();
   closeVocabularyScroll();
   closeScrollRack();
   travelPanelEl.classList.remove("hidden");
@@ -1644,8 +1616,8 @@ function selectTravelDestination(destination) {
   hidePrompt();
 }
 
-function isTypingInTakumiChat() {
-  return takumiChatOpen && document.activeElement === takumiInputEl;
+function isTypingInTeacherChat() {
+  return teacherChatOpen && document.activeElement === teacherInputEl;
 }
 
 function findVocabEntryForText(text, extraEntries = []) {
@@ -1687,9 +1659,9 @@ function appendMessageTextWithVocab(parentEl, text, extraEntries = []) {
   }
 }
 
-function addTakumiMessage(speaker, text, vocabEntries = []) {
+function addTeacherMessage(speaker, text, vocabEntries = []) {
   const messageEl = document.createElement("p");
-  messageEl.className = `takumi-message ${speaker === "You" ? "user" : "takumi"}`;
+  messageEl.className = `teacher-message ${speaker === "You" ? "user" : "teacher"}`;
 
   const nameEl = document.createElement("span");
   nameEl.className = "name";
@@ -1701,69 +1673,19 @@ function addTakumiMessage(speaker, text, vocabEntries = []) {
     appendMessageTextWithVocab(messageEl, text, vocabEntries);
   }
 
-  takumiMessagesEl.appendChild(messageEl);
-  takumiMessagesEl.scrollTop = takumiMessagesEl.scrollHeight;
+  teacherMessagesEl.appendChild(messageEl);
+  teacherMessagesEl.scrollTop = teacherMessagesEl.scrollHeight;
 }
 
-function pickTakumiVocab(text) {
-  const lower = text.toLowerCase();
-  const directMatch = TAKUMI_VOCAB.find((entry) => {
-    return lower.includes(entry.english) || lower.includes(entry.pinyin) || text.includes(entry.hanzi);
-  });
-  if (directMatch) return directMatch;
-
-  if (/\b(price|cost|buy|pay|money|market)\b/.test(lower)) return TAKUMI_VOCAB.find((entry) => entry.hanzi === "多少錢");
-  if (/\b(food|eat|ramen|noodle|hungry|taste)\b/.test(lower)) return TAKUMI_VOCAB.find((entry) => entry.hanzi === "麵");
-  if (/\b(drink|thirsty|tea)\b/.test(lower)) return TAKUMI_VOCAB.find((entry) => entry.hanzi === "茶");
-  if (/\b(hi|hello|hey)\b/.test(lower)) return TAKUMI_VOCAB.find((entry) => entry.hanzi === "你好");
-  if (/\b(thanks|thank you)\b/.test(lower)) return TAKUMI_VOCAB.find((entry) => entry.hanzi === "謝謝");
-
-  const entry = TAKUMI_VOCAB[takumiTurn % TAKUMI_VOCAB.length];
-  takumiTurn += 1;
-  return entry;
-}
-
-function buildTakumiReply(text) {
-  const entry = pickTakumiVocab(text);
-  const lower = text.toLowerCase();
-
-  if (/\b(pronounce|say|sound)\b/.test(lower)) {
-    return `Say "${entry.hanzi}" like "${entry.pinyin}". It means "${entry.english}". ${entry.hint}`;
-  }
-  if (/\b(sentence|example|use)\b/.test(lower)) {
-    return `Sure. Try this: "${entry.hanzi}" means "${entry.english}". In English you might say, "This is ${entry.english}." Keep it simple first.`;
-  }
-  if (/\b(test|quiz|practice)\b/.test(lower)) {
-    return `Tiny quiz: what does "${entry.hanzi}" mean? Hint: ${entry.hint}`;
-  }
-
-  return `Got it. While we talk, remember "${entry.hanzi}" (${entry.pinyin}) means "${entry.english}". ${entry.hint}`;
-}
-
-function openTakumiChat() {
-  activeDialogueNpc = null;
-  dialogueBoxEl.classList.add("hidden");
-  takumiChatOpen = true;
-  takumiChatEl.classList.remove("hidden");
-
-  if (takumiMessagesEl.children.length === 0) {
-    addTakumiMessage("Takumi", "Welcome to the night market. Type in English, and I will teach you a little Mandarin as we chat.");
-    addTakumiMessage("Takumi", "First word: 夜市 (ye shi) means night market.");
-  }
-
-  takumiInputEl.focus();
-}
-
-function closeTakumiChat() {
-  takumiChatOpen = false;
+function closeTeacherChat() {
+  teacherChatOpen = false;
   activeTeacherId = null;
-  takumiChatEl.classList.add("hidden");
-  takumiInputEl.blur();
+  teacherChatEl.classList.add("hidden");
+  teacherInputEl.blur();
   Object.keys(keys).forEach((key) => {
     keys[key] = false;
   });
 }
-
 function pickTeacherVocab(teacher, text) {
   const lower = text.toLowerCase();
   const directMatch = teacher.vocab.find((entry) => {
@@ -1780,7 +1702,8 @@ function pickTeacherVocab(teacher, text) {
 }
 
 function buildTeacherReply(text) {
-  const teacher = TEACHERS[activeTeacherId] || TEACHERS.takumi;
+  const teacher = TEACHERS[activeTeacherId];
+  if (!teacher) throw new Error("No teacher selected");
   const entry = pickTeacherVocab(teacher, text);
   const lower = text.toLowerCase();
 
@@ -1798,7 +1721,8 @@ function buildTeacherReply(text) {
 }
 
 async function buildBackendTeacherReply(teacherId, text) {
-  const teacher = TEACHERS[teacherId] || TEACHERS.takumi;
+  const teacher = TEACHERS[teacherId];
+  if (!teacher) throw new Error("Unknown teacher");
   const history = teacherChatHistory[teacherId] || [];
   const vocabTeachRequest = getVocabTeachRequest();
   const response = await fetch(AGENT_CHAT_API_URL, {
@@ -1832,31 +1756,28 @@ async function buildBackendTeacherReply(teacherId, text) {
 }
 
 function openTeacherChat(teacherId) {
-  const teacher = TEACHERS[teacherId] || TEACHERS.takumi;
+  const teacher = TEACHERS[teacherId];
+  if (!teacher) return;
   activeDialogueNpc = null;
   dialogueBoxEl.classList.add("hidden");
   closeWordLookup();
   closeVocabularyScroll();
   closeScrollRack();
-  takumiChatOpen = true;
+  teacherChatOpen = true;
   activeTeacherId = teacherId;
-  takumiTitleEl.textContent = teacher.name;
-  takumiInputEl.placeholder = teacher.inputPlaceholder;
-  takumiInputEl.setAttribute("aria-label", `Message ${teacher.name}`);
-  takumiChatEl.classList.remove("hidden");
+  teacherTitleEl.textContent = teacher.name;
+  teacherInputEl.placeholder = teacher.inputPlaceholder;
+  teacherInputEl.setAttribute("aria-label", `Message ${teacher.name}`);
+  teacherChatEl.classList.remove("hidden");
 
-  takumiMessagesEl.replaceChildren();
+  teacherMessagesEl.replaceChildren();
   teacherChatHistory[teacherId] = [];
   teacher.intro.forEach((line) => {
-    addTakumiMessage(teacher.name, line);
+    addTeacherMessage(teacher.name, line);
     collectVocabularyFromText(line, teacherId);
   });
 
-  takumiInputEl.focus();
-}
-
-function openTakumiChat() {
-  openTeacherChat("takumi");
+  teacherInputEl.focus();
 }
 
 function getInteriorNPCs() {
@@ -1930,7 +1851,7 @@ function exitLocation() {
   player.y = savedWorldPos.y;
   hidePrompt();
   hideDialogue();
-  closeTakumiChat();
+  closeTeacherChat();
 }
 
 function enterMRTPlatform() {
@@ -1953,7 +1874,7 @@ function enterBonsaiGarden() {
   interiorCamera.x = 0;
   hidePrompt();
   hideDialogue();
-  closeTakumiChat();
+  closeTeacherChat();
 }
 
 function returnToTeaHouseFromGarden() {
@@ -2160,22 +2081,13 @@ const locationInteriors = {
     npcs: [],
   },
   "Night Market": {
+
     theme: "nightMarket",
+
     worldW: NIGHT_MARKET_W,
-    npcs: [
-      {
-        name: "Takuya",
-        img: characterImages.takumi,
-        x: 430,
-        y: 505,
-        radius: 150,
-        drawW: 91,
-        hideLabel: true,
-        chat: "takumi",
-        clipRect: { x: 335, y: 285, w: 190, h: 170 },
-        line: "Welcome. Broth's been rolling all night. Want the house ramen?",
-      },
-    ],
+
+    npcs: [],
+
   },
   "Supermarket": {
     theme: "supermarket",
@@ -2252,11 +2164,11 @@ window.addEventListener("keydown", (e) => {
     return;
   }
 
-  if (isTypingInTakumiChat()) return;
+  if (isTypingInTeacherChat()) return;
   keys[e.key.toLowerCase()] = true;
 });
 window.addEventListener("keyup", (e) => {
-  if (isTypingInTakumiChat()) return;
+  if (isTypingInTeacherChat()) return;
   keys[e.key.toLowerCase()] = false;
 });
 
@@ -2389,7 +2301,7 @@ function updateInteraction() {
   }
 
   if (activeDialogueNpc && activeDialogueNpc !== nearNpc) hideDialogue();
-  if (takumiChatOpen && nearNpc?.chat !== activeTeacherId) closeTakumiChat();
+  if (teacherChatOpen && nearNpc?.chat !== activeTeacherId) closeTeacherChat();
 }
 
 // ---- drawing ----------------------------------------------------------
@@ -2414,7 +2326,8 @@ const asphaltPattern = (() => {
     pctx.save();
     pctx.translate(x, y);
     pctx.rotate(((i * 31) % 180) * Math.PI / 180);
-    pctx.fillStyle = `rgba(${shade},${shade + 2},${shade + 6},${alpha})`;
+    pctx.fillStyle = 
+gba(${shade},${shade + 2},${shade + 6},${alpha})`;
     pctx.fillRect(-w / 2, -h / 2, w, h);
     pctx.restore();
   }
@@ -2466,7 +2379,8 @@ function drawBackground(t) {
   ];
   flowLayers.forEach((layer) => {
     const offset = (t * layer.speed) % layer.spacing;
-    ctx.strokeStyle = `rgba(255,255,255,${layer.alpha})`;
+    ctx.strokeStyle = 
+gba(255,255,255,${layer.alpha})`;
     ctx.lineWidth = layer.lineWidth;
     for (let y = -layer.spacing + offset; y < WORLD_H; y += layer.spacing) {
       ctx.beginPath();
@@ -2838,7 +2752,8 @@ function drawSteamPlumes(t, source) {
     const drift = Math.sin(t * 0.95 + i * 1.7) * 8;
     const alpha = Math.sin(rise * Math.PI) * 0.18;
 
-    ctx.strokeStyle = `rgba(245,246,235,${alpha})`;
+    ctx.strokeStyle = 
+gba(245,246,235,${alpha})`;
     ctx.lineWidth = 3.2 - (i % 3) * 0.35;
     ctx.beginPath();
     ctx.moveTo(baseX, y);
@@ -2865,7 +2780,9 @@ function drawSizzleFlecks(t, source) {
     const x = source.x - source.w / 2 + ((i * 31) % source.w);
     const y = source.y - phase * 22 + Math.sin(t * 3 + i) * 2;
     const alpha = Math.sin(phase * Math.PI) * 0.28;
-    ctx.fillStyle = i % 3 === 0 ? `rgba(255,190,75,${alpha})` : `rgba(255,239,171,${alpha})`;
+    ctx.fillStyle = i % 3 === 0 ? 
+gba(255,190,75,${alpha})` : 
+gba(255,239,171,${alpha})`;
     ctx.beginPath();
     ctx.arc(x, y, 1.4 + (i % 3) * 0.45, 0, Math.PI * 2);
     ctx.fill();
@@ -4088,24 +4005,25 @@ function startGame(character) {
   requestAnimationFrame(loop);
 }
 
-takumiFormEl.addEventListener("submit", async (e) => {
+teacherFormEl.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (teacherChatBusy) return;
-  const text = takumiInputEl.value.trim();
+  const text = teacherInputEl.value.trim();
   if (!text) return;
 
-  const teacherId = activeTeacherId || "takumi";
-  const teacher = TEACHERS[teacherId] || TEACHERS.takumi;
-  addTakumiMessage("You", text);
-  takumiInputEl.value = "";
-  takumiInputEl.placeholder = "Asking agent...";
+  const teacherId = activeTeacherId;
+  const teacher = TEACHERS[teacherId];
+  if (!teacher) return;
+  addTeacherMessage("You", text);
+  teacherInputEl.value = "";
+  teacherInputEl.placeholder = "Asking agent...";
   teacherChatBusy = true;
-  takumiInputEl.disabled = true;
-  takumiSendEl.disabled = true;
+  teacherInputEl.disabled = true;
+  teacherSendEl.disabled = true;
 
   try {
     const result = await buildBackendTeacherReply(teacherId, text);
-    addTakumiMessage(teacher.name, result.reply, result.taughtVocab ? [result.taughtVocab] : []);
+    addTeacherMessage(teacher.name, result.reply, result.taughtVocab ? [result.taughtVocab] : []);
     const shouldTeachFromReply = vocabProgress.responseCount >= vocabProgress.nextTeachAt;
     if (result.taughtVocab) {
       const learnedEntry = addAcquiredVocab(result.taughtVocab, teacher);
@@ -4121,20 +4039,20 @@ takumiFormEl.addEventListener("submit", async (e) => {
     }
   } catch (error) {
     console.warn("Backend NPC chat unavailable.", error);
-    addTakumiMessage(
+    addTeacherMessage(
       teacher.name,
       "I am having trouble reaching my language brain right now. Please try again in a moment."
     );
   } finally {
     teacherChatBusy = false;
-    takumiInputEl.disabled = false;
-    takumiSendEl.disabled = false;
-    takumiInputEl.placeholder = teacher.inputPlaceholder;
-    takumiInputEl.focus();
+    teacherInputEl.disabled = false;
+    teacherSendEl.disabled = false;
+    teacherInputEl.placeholder = teacher.inputPlaceholder;
+    teacherInputEl.focus();
   }
 });
 
-takumiCloseEl.addEventListener("click", closeTakumiChat);
+teacherCloseEl.addEventListener("click", closeTeacherChat);
 travelCloseEl.addEventListener("click", closeTravelPanel);
 scrollHudEl.addEventListener("click", openVocabularyScroll);
 questHudEl.addEventListener("click", () => {
@@ -4143,7 +4061,7 @@ questHudEl.addEventListener("click", () => {
   closeVocabularyScroll();
   closeScrollRack();
   closeMrtMapPanel();
-  closeTakumiChat();
+  closeTeacherChat();
   showDialogue({
     name: "Quest Book",
     line: "Your quests will live here. For now, keep exploring Taipei, talk with NPC teachers, and collect vocabulary scrolls.",
@@ -4216,12 +4134,12 @@ window.addEventListener("keydown", (e) => {
     return;
   }
 
-  if (takumiChatOpen && e.code === "Escape") {
-    closeTakumiChat();
+  if (teacherChatOpen && e.code === "Escape") {
+    closeTeacherChat();
     return;
   }
 
-  if (isTypingInTakumiChat()) return;
+  if (isTypingInTeacherChat()) return;
 
   if (started && e.code === "KeyM") {
     bgm.muted = !bgm.muted;
@@ -4253,7 +4171,7 @@ window.addEventListener("keydown", (e) => {
         } else if (nearNpc.action === "openMrtMap") {
           openMrtMapPanel();
         } else if (nearNpc.chat) {
-          if (takumiChatOpen) closeTakumiChat();
+          if (teacherChatOpen) closeTeacherChat();
           else openTeacherChat(nearNpc.chat);
         } else if (activeDialogueNpc === nearNpc) hideDialogue();
         else showDialogue(nearNpc);
