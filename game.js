@@ -2326,8 +2326,7 @@ const asphaltPattern = (() => {
     pctx.save();
     pctx.translate(x, y);
     pctx.rotate(((i * 31) % 180) * Math.PI / 180);
-    pctx.fillStyle = 
-gba(${shade},${shade + 2},${shade + 6},${alpha})`;
+    pctx.fillStyle = `rgba(${shade},${shade + 2},${shade + 6},${alpha})`;
     pctx.fillRect(-w / 2, -h / 2, w, h);
     pctx.restore();
   }
@@ -2379,8 +2378,7 @@ function drawBackground(t) {
   ];
   flowLayers.forEach((layer) => {
     const offset = (t * layer.speed) % layer.spacing;
-    ctx.strokeStyle = 
-gba(255,255,255,${layer.alpha})`;
+    ctx.strokeStyle = `rgba(255,255,255,${layer.alpha})`;
     ctx.lineWidth = layer.lineWidth;
     for (let y = -layer.spacing + offset; y < WORLD_H; y += layer.spacing) {
       ctx.beginPath();
@@ -2752,8 +2750,7 @@ function drawSteamPlumes(t, source) {
     const drift = Math.sin(t * 0.95 + i * 1.7) * 8;
     const alpha = Math.sin(rise * Math.PI) * 0.18;
 
-    ctx.strokeStyle = 
-gba(245,246,235,${alpha})`;
+    ctx.strokeStyle = `rgba(245,246,235,${alpha})`;
     ctx.lineWidth = 3.2 - (i % 3) * 0.35;
     ctx.beginPath();
     ctx.moveTo(baseX, y);
@@ -2780,9 +2777,7 @@ function drawSizzleFlecks(t, source) {
     const x = source.x - source.w / 2 + ((i * 31) % source.w);
     const y = source.y - phase * 22 + Math.sin(t * 3 + i) * 2;
     const alpha = Math.sin(phase * Math.PI) * 0.28;
-    ctx.fillStyle = i % 3 === 0 ? 
-gba(255,190,75,${alpha})` : 
-gba(255,239,171,${alpha})`;
+    ctx.fillStyle = i % 3 === 0 ? `rgba(255,190,75,${alpha})` : `rgba(255,239,171,${alpha})`;
     ctx.beginPath();
     ctx.arc(x, y, 1.4 + (i % 3) * 0.45, 0, Math.PI * 2);
     ctx.fill();
