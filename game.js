@@ -3910,8 +3910,8 @@ function loop(now) {
 }
 
 // ---- intro -> character select -> game ------------------------------------
-// Space starts the intro video; after it ends, the player can sign in or
-// continue offline before choosing a character.
+// Space starts the game from the intro; the skip button keeps the sign-in and
+// character-selection flow available for players who want it.
 
 const introEl = document.getElementById("intro");
 const introVideo = document.getElementById("intro-video");
@@ -4098,6 +4098,17 @@ renderCharacterCards();
 initAuth();
 
 window.addEventListener("keydown", (e) => {
+  if (!started && !introDone && e.code === "Space") {
+    e.preventDefault();
+    loginDone = true;
+    introVideo.pause();
+    introEl.classList.add("hidden");
+    loginEl.classList.add("hidden");
+    selectEl.classList.add("hidden");
+    startGame("delinquent");
+    return;
+  }
+
   if (!started && e.code === "Enter") {
     e.preventDefault();
     introDone = true;
@@ -4184,13 +4195,6 @@ window.addEventListener("keydown", (e) => {
   }
 
   if (introDone) return;
-  if (e.code === "Space") {
-    e.preventDefault();
-    if (introVideo.muted) introVideo.muted = false;
-    if (introVideo.paused) {
-      introVideo.play().catch((error) => console.warn("Intro video could not start.", error));
-    }
-  }
 });
 
 
