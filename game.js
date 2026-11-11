@@ -1785,6 +1785,7 @@ async function speakTeacherReply(text, teacherId, button) {
       button.textContent = "Sign in to listen";
       button.title = "Sign in to use NPC voice.";
     }
+    showVoiceSignIn();
     return;
   }
 
@@ -4007,9 +4008,9 @@ let started = false;
 
 function renderCharacterCards() {
   const characters = [
-    { id: "delinquent", label: "P1: Delinquent", portrait: "assets/characters/delinquent_portrait.png" },
-    { id: "grandmother", label: "P2: Grandmother", portrait: "assets/characters/grandmother_portrait.png" },
-    { id: "hotchick", label: "P3: Traveler", portrait: "assets/characters/hotchick_portrait.png" },
+    { id: "delinquent", label: "八加九", portrait: "assets/characters/delinquent_portrait.png" },
+    { id: "grandmother", label: "歐巴桑", portrait: "assets/characters/grandmother_portrait.png" },
+    { id: "hotchick", label: "辣台妹", portrait: "assets/characters/hotchick_portrait.png" },
   ];
 
   selectCardsEl.innerHTML = "";
@@ -4038,6 +4039,10 @@ function renderCharacterCards() {
 }
 
 function showLogin() {
+  if (started) {
+    showVoiceSignIn();
+    return;
+  }
   if (introDone) return;
   introDone = true;
   introVideo.pause();
@@ -4046,14 +4051,13 @@ function showLogin() {
   updateAuthUi();
 }
 
-function skipIntroToOfflineSelect() {
-  if (started || loginDone) return;
-  introDone = true;
-  loginDone = true;
-  introVideo.pause();
-  introEl.classList.add("hidden");
-  loginEl.classList.add("hidden");
-  selectEl.classList.remove("hidden");
+function showVoiceSignIn() {
+  loginEl.classList.remove("hidden");
+  loginOfflineEl.textContent = "Back to game";
+  updateAuthUi();
+  if (authReady && !authSession?.access_token) {
+    loginStatusEl.textContent = "Sign in to listen to NPC voices, or return to the game.";
+  }
 }
 
 function showSelect() {
@@ -4068,6 +4072,11 @@ function showSelect() {
 }
 
 function playOffline() {
+  if (started) {
+    loginEl.classList.add("hidden");
+    loginOfflineEl.textContent = "Play offline";
+    return;
+  }
   if (loginDone) return;
   authSession = null;
   loginDone = true;
@@ -4186,7 +4195,7 @@ flashcardCloseEl.addEventListener("click", (e) => {
 });
 renderTravelDestinations();
 initFlashcardSpeech();
-introSkipEl.addEventListener("click", skipIntroToOfflineSelect);
+introSkipEl.addEventListener("click", showLogin);
 introVideo.addEventListener("ended", showLogin);
 loginGoogleEl.addEventListener("click", () => signInWithProvider("google"));
 loginContinueEl.addEventListener("click", showSelect);
@@ -4195,26 +4204,9 @@ renderCharacterCards();
 initAuth();
 
 window.addEventListener("keydown", (e) => {
-  if (!started && !loginDone && e.code === "Space") {
+  if (!started && !introDone && (e.code === "Space" || e.code === "Enter")) {
     e.preventDefault();
-    loginDone = true;
-    introVideo.pause();
-    introEl.classList.add("hidden");
-    loginEl.classList.add("hidden");
-    selectEl.classList.add("hidden");
-    startGame("delinquent");
-    return;
-  }
-
-  if (!started && e.code === "Enter") {
-    e.preventDefault();
-    introDone = true;
-    loginDone = true;
-    introVideo.pause();
-    introEl.classList.add("hidden");
-    loginEl.classList.add("hidden");
-    selectEl.classList.add("hidden");
-    startGame("delinquent");
+    showLogin();
     return;
   }
 
