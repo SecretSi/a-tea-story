@@ -4008,9 +4008,9 @@ let started = false;
 
 function renderCharacterCards() {
   const characters = [
-    { id: "delinquent", label: "辣台妹", portrait: "assets/characters/delinquent_portrait.png" },
-    { id: "grandmother", label: "八加九", portrait: "assets/characters/grandmother_portrait.png" },
-    { id: "hotchick", label: "歐巴桑", portrait: "assets/characters/hotchick_portrait.png" },
+    { id: "delinquent", label: "八加九", portrait: "assets/characters/delinquent_portrait.png" },
+    { id: "grandmother", label: "歐巴桑", portrait: "assets/characters/grandmother_portrait.png" },
+    { id: "hotchick", label: "辣台妹", portrait: "assets/characters/hotchick_portrait.png" },
   ];
 
   selectCardsEl.innerHTML = "";
