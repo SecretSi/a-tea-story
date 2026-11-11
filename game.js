@@ -27,6 +27,7 @@ const ASSET_PATH = "assets/locations/";
 const CHARACTER_PATH = "assets/characters/";
 const ITEM_PATH = "assets/items/";
 const AGENT_CHAT_API_URL = "/api/agents/chat";
+const AGENT_SPEECH_API_URL = "/api/agents/speech";
 const AUTH_CONFIG_API_URL = "/api/auth/config";
 const VOCAB_PACKS_API_URL = "/api/vocab/packs";
 const VOCAB_PROGRESS_API_URL = "/api/vocab/progress";
@@ -473,6 +474,7 @@ const TEACHERS = {
 let teacherChatOpen = false;
 let activeTeacherId = null;
 let teacherChatBusy = false;
+let activeTeacherAudio = null;
 const teacherChatHistory = {};
 let supabaseClient = null;
 let authSession = null;
@@ -1659,7 +1661,14 @@ function appendMessageTextWithVocab(parentEl, text, extraEntries = []) {
   }
 }
 
-function addTeacherMessage(speaker, text, vocabEntries = []) {
+function stopTeacherVoice() {
+  if (!activeTeacherAudio) return;
+  activeTeacherAudio.audio.pause();
+  URL.revokeObjectURL(activeTeacherAudio.url);
+  activeTeacherAudio = null;
+}
+
+function addTeacherMessage(speaker, text, vocabEntries = [], voiceTeacherId = null) {
   const messageEl = document.createElement("p");
   messageEl.className = `teacher-message ${speaker === "You" ? "user" : "teacher"}`;
 
@@ -1673,11 +1682,24 @@ function addTeacherMessage(speaker, text, vocabEntries = []) {
     appendMessageTextWithVocab(messageEl, text, vocabEntries);
   }
 
+  let voiceButton = null;
+  if (voiceTeacherId) {
+    voiceButton = document.createElement("button");
+    voiceButton.type = "button";
+    voiceButton.className = "teacher-voice";
+    voiceButton.textContent = "Listen";
+    voiceButton.setAttribute("aria-label", `Listen to ${speaker}`);
+    voiceButton.addEventListener("click", () => speakTeacherReply(text, voiceTeacherId, voiceButton));
+    messageEl.appendChild(voiceButton);
+  }
+
   teacherMessagesEl.appendChild(messageEl);
   teacherMessagesEl.scrollTop = teacherMessagesEl.scrollHeight;
+  return voiceButton;
 }
 
 function closeTeacherChat() {
+  stopTeacherVoice();
   teacherChatOpen = false;
   activeTeacherId = null;
   teacherChatEl.classList.add("hidden");
@@ -1755,6 +1777,69 @@ async function buildBackendTeacherReply(teacherId, text) {
   return { reply, taughtVocab: data.taughtVocab || null };
 }
 
+async function speakTeacherReply(text, teacherId, button) {
+  const spokenText = String(text || "").trim();
+  if (!spokenText) return;
+  if (!authSession?.access_token) {
+    if (button) {
+      button.textContent = "Sign in to listen";
+      button.title = "Sign in to use NPC voice.";
+    }
+    return;
+  }
+
+  let audio = null;
+  let objectUrl = null;
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Loading voice…";
+  }
+
+  try {
+    const response = await fetch(AGENT_SPEECH_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+      body: JSON.stringify({ text: spokenText, teacherId }),
+    });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || "Voice request failed");
+    }
+
+    const audioBlob = await response.blob();
+    if (!audioBlob.type.startsWith("audio/")) throw new Error("Voice service returned an invalid audio response");
+
+    stopTeacherVoice();
+    objectUrl = URL.createObjectURL(audioBlob);
+    audio = new Audio(objectUrl);
+    activeTeacherAudio = { audio, url: objectUrl };
+
+    const finish = () => {
+      if (activeTeacherAudio?.audio === audio) {
+        URL.revokeObjectURL(objectUrl);
+        activeTeacherAudio = null;
+      }
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Listen";
+      }
+    };
+    audio.addEventListener("ended", finish, { once: true });
+    audio.addEventListener("error", finish, { once: true });
+    if (button) button.textContent = "Playing…";
+    await audio.play();
+  } catch (error) {
+    if (activeTeacherAudio?.audio === audio) stopTeacherVoice();
+    else if (objectUrl) URL.revokeObjectURL(objectUrl);
+    console.warn("ElevenLabs NPC voice unavailable.", error);
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Try voice again";
+      button.title = "Voice is unavailable. Check the Vercel setup and sign-in.";
+    }
+  }
+}
+
 function openTeacherChat(teacherId) {
   const teacher = TEACHERS[teacherId];
   if (!teacher) return;
@@ -1773,7 +1858,7 @@ function openTeacherChat(teacherId) {
   teacherMessagesEl.replaceChildren();
   teacherChatHistory[teacherId] = [];
   teacher.intro.forEach((line) => {
-    addTeacherMessage(teacher.name, line);
+    addTeacherMessage(teacher.name, line, [], teacherId);
     collectVocabularyFromText(line, teacherId);
   });
 
@@ -4017,8 +4102,28 @@ teacherFormEl.addEventListener("submit", async (e) => {
   teacherSendEl.disabled = true;
 
   try {
-    const result = await buildBackendTeacherReply(teacherId, text);
-    addTeacherMessage(teacher.name, result.reply, result.taughtVocab ? [result.taughtVocab] : []);
+    let result;
+    try {
+      result = await buildBackendTeacherReply(teacherId, text);
+    } catch (error) {
+      console.warn("Backend NPC chat unavailable; using the built-in teacher reply.", error);
+      const reply = buildTeacherReply(text);
+      const history = teacherChatHistory[teacherId] || [];
+      teacherChatHistory[teacherId] = [
+        ...history,
+        { role: "user", content: text },
+        { role: "assistant", content: reply },
+      ].slice(-10);
+      result = { reply, taughtVocab: null };
+    }
+
+    const voiceButton = addTeacherMessage(
+      teacher.name,
+      result.reply,
+      result.taughtVocab ? [result.taughtVocab] : [],
+      teacherId
+    );
+    if (voiceButton) speakTeacherReply(result.reply, teacherId, voiceButton);
     const shouldTeachFromReply = vocabProgress.responseCount >= vocabProgress.nextTeachAt;
     if (result.taughtVocab) {
       const learnedEntry = addAcquiredVocab(result.taughtVocab, teacher);
@@ -4033,11 +4138,8 @@ teacherFormEl.addEventListener("submit", async (e) => {
       }
     }
   } catch (error) {
-    console.warn("Backend NPC chat unavailable.", error);
-    addTeacherMessage(
-      teacher.name,
-      "I am having trouble reaching my language brain right now. Please try again in a moment."
-    );
+    console.warn("NPC reply unavailable.", error);
+    addTeacherMessage(teacher.name, "I could not prepare a reply just now. Please try again.");
   } finally {
     teacherChatBusy = false;
     teacherInputEl.disabled = false;

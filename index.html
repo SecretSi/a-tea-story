@@ -331,6 +331,23 @@
   .teacher-message.teacher {
     color: #f3e3c3;
   }
+  .teacher-voice {
+    display: block;
+    margin-top: 8px;
+    border: 1px solid rgba(243,219,160,0.45);
+    border-radius: 4px;
+    background: #251b18;
+    color: #f3dba0;
+    padding: 5px 9px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  .teacher-voice:disabled {
+    opacity: 0.62;
+    cursor: wait;
+  }
   #teacher-form {
     display: flex;
     gap: 8px;
@@ -1216,7 +1233,7 @@
 </div>
 <audio id="bgm" src="assets/audio/bgm.mp3" loop preload="auto"></audio>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="game.js?v=94"></script>
+<script src="game.js?v=95"></script>
 </body>
 </html>
 
