@@ -10,7 +10,7 @@ The current public site is on GitHub Pages. GitHub Pages serves the HTML, CSS, a
 
 ## Deploy
 
-1. Import `SecretSi/a-tea-story` into Vercel and choose the `codex/vercel-elevenlabs-voice` branch for a preview deployment. Use the repository root and the "Other" framework preset.
+1. Import `SecretSi/a-tea-story` into Vercel, keep `main` as the production branch, and use the repository root with the "Other" framework preset. Vercel should create a Preview deployment for this pull request’s `codex/vercel-elevenlabs-voice` branch.
 2. In Vercel, open the project’s **Settings → Environment Variables** and add these variables for the Preview environment first:
    - `ELEVENLABS_API_KEY`: your ElevenLabs key.
    - `ELEVENLABS_VOICE_ID`: the voice ID you want NPCs to use. Choose a voice in ElevenLabs and copy its voice ID.
