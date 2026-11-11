@@ -1689,7 +1689,7 @@ function addTeacherMessage(speaker, text, vocabEntries = [], voiceTeacherId = nu
     voiceButton.className = "teacher-voice";
     voiceButton.textContent = "Listen";
     voiceButton.setAttribute("aria-label", `Listen to ${speaker}`);
-    voiceButton.addEventListener("click", () => speakTeacherReply(text, voiceButton));
+    voiceButton.addEventListener("click", () => speakTeacherReply(text, voiceTeacherId, voiceButton));
     messageEl.appendChild(voiceButton);
   }
 
@@ -1777,7 +1777,7 @@ async function buildBackendTeacherReply(teacherId, text) {
   return { reply, taughtVocab: data.taughtVocab || null };
 }
 
-async function speakTeacherReply(text, button) {
+async function speakTeacherReply(text, teacherId, button) {
   const spokenText = String(text || "").trim();
   if (!spokenText) return;
   if (!authSession?.access_token) {
@@ -1799,7 +1799,7 @@ async function speakTeacherReply(text, button) {
     const response = await fetch(AGENT_SPEECH_API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-      body: JSON.stringify({ text: spokenText }),
+      body: JSON.stringify({ text: spokenText, teacherId }),
     });
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
@@ -4123,7 +4123,7 @@ teacherFormEl.addEventListener("submit", async (e) => {
       result.taughtVocab ? [result.taughtVocab] : [],
       teacherId
     );
-    if (voiceButton) speakTeacherReply(result.reply, voiceButton);
+    if (voiceButton) speakTeacherReply(result.reply, teacherId, voiceButton);
     const shouldTeachFromReply = vocabProgress.responseCount >= vocabProgress.nextTeachAt;
     if (result.taughtVocab) {
       const learnedEntry = addAcquiredVocab(result.taughtVocab, teacher);
