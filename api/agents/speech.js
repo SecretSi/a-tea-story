@@ -1,5 +1,10 @@
 const MAX_TEXT_LENGTH = 1200;
 
+function parseBody(req) {
+  if (typeof req.body === "string") return JSON.parse(req.body);
+  return req.body || {};
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store, max-age=0");
   if (req.method !== "POST") {
@@ -7,12 +12,40 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  let body;
+  try {
+    body = parseBody(req);
+  } catch {
+    return res.status(400).json({ error: "Invalid JSON request." });
+  }
+
+  const text = typeof body.text === "string" ? body.text.trim() : "";
+  const teacherId = typeof body.teacherId === "string" ? body.teacherId : "";
+  if (!text || text.length > MAX_TEXT_LENGTH) {
+    return res.status(400).json({ error: `Text must be between 1 and ${MAX_TEXT_LENGTH} characters.` });
+  }
+  if (teacherId !== "ade" && teacherId !== "xiaochen") {
+    return res.status(400).json({ error: "Unknown NPC voice." });
+  }
+
   const apiKey = process.env.ELEVENLABS_API_KEY;
-  const voiceId = process.env.ELEVENLABS_VOICE_ID;
   const supabaseUrl = process.env.SUPABASE_URL;
   const anonKey = process.env.SUPABASE_ANON_KEY;
+  const fallbackVoiceId = process.env.ELEVENLABS_VOICE_ID;
+  const maleVoiceId =
+    process.env.ELEVENLABS_MALE_VOICE_ID ||
+    process.env.ELEVENLABS_VOICE_ID_MALE ||
+    process.env.ELEVENLABS_VOICE_ID_ADE;
+  const femaleVoiceId =
+    process.env.ELEVENLABS_FEMALE_VOICE_ID ||
+    process.env.ELEVENLABS_VOICE_ID_FEMALE ||
+    process.env.ELEVENLABS_VOICE_ID_XIAOCHEN;
+  const voiceId = teacherId === "ade"
+    ? (maleVoiceId || fallbackVoiceId)
+    : (femaleVoiceId || fallbackVoiceId);
+
   if (!apiKey || !voiceId || !supabaseUrl || !anonKey) {
-    return res.status(503).json({ error: "Voice service is not configured." });
+    return res.status(503).json({ error: "Voice service is not configured for this NPC." });
   }
 
   const authorization = req.headers.authorization || "";
@@ -30,12 +63,6 @@ module.exports = async function handler(req, res) {
     });
     if (!userResponse.ok) {
       return res.status(401).json({ error: "Your sign-in has expired. Sign in again." });
-    }
-
-    const body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
-    const text = typeof body.text === "string" ? body.text.trim() : "";
-    if (!text || text.length > MAX_TEXT_LENGTH) {
-      return res.status(400).json({ error: `Text must be between 1 and ${MAX_TEXT_LENGTH} characters.` });
     }
 
     const speechResponse = await fetch(
