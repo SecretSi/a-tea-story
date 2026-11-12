@@ -30,6 +30,9 @@ const AGENT_CHAT_API_URL = "/api/agents/chat";
 const AGENT_SPEECH_API_URL = "/api/agents/speech";
 const AUTH_CONFIG_API_URL = "/api/auth/config";
 const VOCAB_PACKS_API_URL = "/api/vocab/packs";
+const VOCAB_PACK_SIZE = 15;
+const VOCAB_TOTAL_WORDS = 2005;
+const VOCAB_TOTAL_PACKS = Math.ceil(VOCAB_TOTAL_WORDS / VOCAB_PACK_SIZE);
 const VOCAB_PROGRESS_API_URL = "/api/vocab/progress";
 const VOCAB_LOOKUP_API_URL = "/api/vocab/lookup";
 // bust the browser cache on every load so edited source art always shows
@@ -872,12 +875,14 @@ function addAcquiredVocab(entry, teacher) {
   acquiredVocab.push(savedEntry);
   saveAcquiredVocab();
   if (currentVocabPackWords.length && currentPackCollected().length >= currentVocabPackWords.length) {
-    vocabProgress.packNumber += 1;
+    if (vocabProgress.packNumber < VOCAB_TOTAL_PACKS) {
+      vocabProgress.packNumber += 1;
+      currentVocabPack = null;
+      currentVocabPackWords = [];
+    }
     vocabProgress.responseCount = 0;
     vocabProgress.nextTeachAt = randomVocabInterval();
     saveVocabProgress();
-    currentVocabPack = null;
-    currentVocabPackWords = [];
   }
   scheduleRemoteVocabProgressSave();
   return savedEntry;
@@ -919,7 +924,7 @@ function renderVocabularyScroll() {
   const packTitle = currentVocabPack?.title || `Chinese Pack ${String(vocabProgress.packNumber).padStart(3, "0")}`;
   const visiblePackNumber = Number(currentVocabPack?.packNumber || vocabProgress.packNumber || 1);
   const collected = currentPackCollected(visiblePackNumber);
-  const packCount = Math.min(100, currentVocabPack?.count || currentVocabPackWords.length || 100);
+  const packCount = Math.min(VOCAB_PACK_SIZE, currentVocabPack?.count || currentVocabPackWords.length || VOCAB_PACK_SIZE);
   const collectedByPosition = new Map();
   const collectedByKey = new Map();
   collected.forEach((entry) => {
@@ -1002,19 +1007,20 @@ function renderScrollRack() {
 
   const statusEl = document.createElement("p");
   statusEl.className = "scroll-rack-status";
-  statusEl.textContent = "Each scroll holds one 100-word Chinese pack. Scroll through all 76 packs to see the full 7,500+ word path.";
+  statusEl.textContent = `Each scroll holds up to ${VOCAB_PACK_SIZE} A1–B1 words. The foundation list has ${VOCAB_TOTAL_WORDS.toLocaleString()} words across ${VOCAB_TOTAL_PACKS} packs.`;
   scrollRackContentEl.appendChild(statusEl);
 
   const gridEl = document.createElement("div");
   gridEl.className = "scroll-rack-grid";
 
-  for (let packNumber = 1; packNumber <= 76; packNumber += 1) {
+  for (let packNumber = 1; packNumber <= VOCAB_TOTAL_PACKS; packNumber += 1) {
     const collectedCount = acquiredVocab.filter((entry) => Number(entry.packNumber || 1) === packNumber).length;
+    const packSize = Math.min(VOCAB_PACK_SIZE, VOCAB_TOTAL_WORDS - (packNumber - 1) * VOCAB_PACK_SIZE);
     const buttonEl = document.createElement("button");
     buttonEl.type = "button";
     buttonEl.className = "scroll-pack";
     if (packNumber === Number(vocabProgress.packNumber || 1)) buttonEl.classList.add("current");
-    if (collectedCount >= 100) buttonEl.classList.add("complete");
+    if (collectedCount >= packSize) buttonEl.classList.add("complete");
     if (packNumber > Number(vocabProgress.packNumber || 1) && collectedCount === 0) buttonEl.classList.add("locked");
     buttonEl.dataset.pack = String(packNumber);
 
@@ -1032,7 +1038,7 @@ function renderScrollRack() {
 
     const progressEl = document.createElement("span");
     progressEl.className = "scroll-pack-progress";
-    progressEl.textContent = `${Math.min(collectedCount, 100)}/100 words unlocked`;
+    progressEl.textContent = `${Math.min(collectedCount, packSize)}/${packSize} words unlocked`;
 
     textEl.append(numberEl, titleEl, progressEl);
     buttonEl.append(iconEl, textEl);
