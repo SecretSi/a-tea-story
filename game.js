@@ -323,6 +323,9 @@ const travelCloseEl = document.getElementById("travel-close");
 const scrollHudEl = document.getElementById("scroll-hud");
 const questHudEl = document.getElementById("quest-hud");
 const vocabPanelEl = document.getElementById("vocab-panel");
+const questPanelEl = document.getElementById("quest-panel");
+const questContentEl = document.getElementById("quest-content");
+const questCloseEl = document.getElementById("quest-close");
 const vocabContentEl = document.getElementById("vocab-content");
 const vocabCloseEl = document.getElementById("vocab-close");
 const scrollRackPanelEl = document.getElementById("scroll-rack-panel");
@@ -482,6 +485,7 @@ let authSession = null;
 let authReady = false;
 let authUnavailableMessage = "Auth not configured";
 let vocabPanelOpen = false;
+let questPanelOpen = false;
 let scrollRackOpen = false;
 let mrtMapOpen = false;
 const acquiredVocab = loadAcquiredVocab();
@@ -1058,6 +1062,107 @@ function openScrollRack() {
 function closeScrollRack() {
   scrollRackOpen = false;
   scrollRackPanelEl.classList.add("hidden");
+}
+
+function renderQuestList() {
+  questContentEl.replaceChildren();
+
+  const xiaochenWords = acquiredVocab.filter((entry) => entry.teacherId === "xiaochen").length;
+  const adeWords = acquiredVocab.filter((entry) => entry.teacherId === "ade").length;
+  const packNumber = Number(vocabProgress.packNumber || 1);
+  const collected = currentPackCollected(packNumber).length;
+  const packCount = Math.min(100, currentVocabPack?.count || currentVocabPackWords.length || 100);
+  const quests = [
+    {
+      title: "MRT first words",
+      location: "MRT Station",
+      description: "Find 小陳 at the ticket booth and learn station Mandarin.",
+      progress: `${xiaochenWords} words learned`,
+      complete: xiaochenWords > 0,
+    },
+    {
+      title: "Convenience store conversation",
+      location: "Convenience Store",
+      description: "Find 阿德 at the checkout and practice useful Mandarin phrases.",
+      progress: `${adeWords} words learned`,
+      complete: adeWords > 0,
+    },
+    {
+      title: "Fill a language scroll",
+      location: `Pack ${String(packNumber).padStart(3, "0")}`,
+      description: "Talk with teachers to collect vocabulary for your current scroll.",
+      progress: `${Math.min(collected, packCount)} / ${packCount} words`,
+      complete: collected >= packCount,
+      action: "Open current scroll",
+    },
+  ];
+
+  const intro = document.createElement("p");
+  intro.className = "quest-intro";
+  intro.textContent = "Your Taipei learning quests. Progress updates as you learn words and fill your scroll.";
+  questContentEl.appendChild(intro);
+
+  const list = document.createElement("div");
+  list.className = "quest-list";
+  quests.forEach((quest) => {
+    const card = document.createElement("article");
+    card.className = `quest-card${quest.complete ? " complete" : ""}`;
+
+    const top = document.createElement("div");
+    top.className = "quest-card-top";
+    const title = document.createElement("h3");
+    title.textContent = quest.title;
+    const status = document.createElement("span");
+    status.className = `quest-status${quest.complete ? " complete" : ""}`;
+    status.textContent = quest.complete ? "Complete" : "In progress";
+    top.append(title, status);
+
+    const description = document.createElement("p");
+    description.className = "quest-description";
+    description.textContent = quest.description;
+
+    const detail = document.createElement("div");
+    detail.className = "quest-detail";
+    const place = document.createElement("span");
+    place.textContent = quest.location;
+    const progress = document.createElement("span");
+    progress.textContent = quest.progress;
+    detail.append(place, progress);
+
+    card.append(top, description, detail);
+    if (quest.action) {
+      const action = document.createElement("button");
+      action.type = "button";
+      action.className = "quest-action";
+      action.textContent = quest.action;
+      action.addEventListener("click", () => {
+        closeQuestPanel();
+        openVocabularyScroll();
+      });
+      card.appendChild(action);
+    }
+    list.appendChild(card);
+  });
+  questContentEl.appendChild(list);
+}
+
+function openQuestPanel() {
+  questPanelOpen = true;
+  hidePrompt();
+  hideDialogue();
+  closeWordLookup();
+  closeTravelPanel();
+  closeTeacherChat();
+  closeVocabularyScroll();
+  closeScrollRack();
+  closeMrtMapPanel();
+  renderQuestList();
+  questPanelEl.classList.remove("hidden");
+}
+
+function closeQuestPanel() {
+  questPanelOpen = false;
+  questPanelEl.classList.add("hidden");
 }
 
 function openMrtMapPanel() {
@@ -2279,6 +2384,13 @@ window.addEventListener("keydown", (e) => {
     return;
   }
 
+  if (questPanelOpen) {
+    if (e.code === "Escape" || e.code === "KeyE") closeQuestPanel();
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    return;
+  }
+
   if (travelPanelOpen) {
     if (e.code === "Escape" || e.code === "KeyE") closeTravelPanel();
     e.preventDefault();
@@ -2295,7 +2407,7 @@ window.addEventListener("keyup", (e) => {
 });
 
 function updatePlayer(dt) {
-  if (travelPanelOpen || vocabPanelOpen || scrollRackOpen || mrtMapOpen) {
+  if (travelPanelOpen || vocabPanelOpen || scrollRackOpen || mrtMapOpen || questPanelOpen) {
     player.moving = false;
     return;
   }
@@ -2389,7 +2501,7 @@ function updateInteriorCamera() {
 // checks proximity to location doors / interior NPCs and exits, and
 // keeps the on-screen prompt + dialogue box in sync
 function updateInteraction() {
-  if (travelPanelOpen) {
+  if (travelPanelOpen || questPanelOpen) {
     hidePrompt();
     return;
   }
@@ -4197,18 +4309,8 @@ teacherFormEl.addEventListener("submit", async (e) => {
 teacherCloseEl.addEventListener("click", closeTeacherChat);
 travelCloseEl.addEventListener("click", closeTravelPanel);
 scrollHudEl.addEventListener("click", openVocabularyScroll);
-questHudEl.addEventListener("click", () => {
-  hidePrompt();
-  closeTravelPanel();
-  closeVocabularyScroll();
-  closeScrollRack();
-  closeMrtMapPanel();
-  closeTeacherChat();
-  showDialogue({
-    name: "Quest Book",
-    line: "Your quests will live here. For now, keep exploring Taipei, talk with NPC teachers, and collect vocabulary scrolls.",
-  });
-});
+questHudEl.addEventListener("click", openQuestPanel);
+questCloseEl.addEventListener("click", closeQuestPanel);
 vocabCloseEl.addEventListener("click", closeVocabularyScroll);
 scrollRackCloseEl.addEventListener("click", closeScrollRack);
 mrtMapCloseEl.addEventListener("click", closeMrtMapPanel);
