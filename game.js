@@ -475,6 +475,7 @@ let teacherChatOpen = false;
 let activeTeacherId = null;
 let teacherChatBusy = false;
 let activeTeacherAudio = null;
+const teacherVoiceAudio = new WeakMap();
 const teacherChatHistory = {};
 let supabaseClient = null;
 let authSession = null;
@@ -1664,8 +1665,21 @@ function appendMessageTextWithVocab(parentEl, text, extraEntries = []) {
 function stopTeacherVoice() {
   if (!activeTeacherAudio) return;
   activeTeacherAudio.audio.pause();
-  URL.revokeObjectURL(activeTeacherAudio.url);
+  activeTeacherAudio.audio.currentTime = 0;
+  if (activeTeacherAudio.button) {
+    activeTeacherAudio.button.disabled = false;
+    activeTeacherAudio.button.textContent = "Play reply";
+  }
   activeTeacherAudio = null;
+}
+
+function clearTeacherVoiceAudio() {
+  stopTeacherVoice();
+  teacherMessagesEl.querySelectorAll(".teacher-voice").forEach((button) => {
+    const prepared = teacherVoiceAudio.get(button);
+    if (prepared) URL.revokeObjectURL(prepared.url);
+    teacherVoiceAudio.delete(button);
+  });
 }
 
 function addTeacherMessage(speaker, text, vocabEntries = [], voiceTeacherId = null) {
@@ -1699,7 +1713,7 @@ function addTeacherMessage(speaker, text, vocabEntries = [], voiceTeacherId = nu
 }
 
 function closeTeacherChat() {
-  stopTeacherVoice();
+  clearTeacherVoiceAudio();
   teacherChatOpen = false;
   activeTeacherId = null;
   teacherChatEl.classList.add("hidden");
@@ -1777,24 +1791,19 @@ async function buildBackendTeacherReply(teacherId, text) {
   return { reply, taughtVocab: data.taughtVocab || null };
 }
 
-async function speakTeacherReply(text, teacherId, button) {
+async function prepareTeacherReplyAudio(text, teacherId, button) {
   const spokenText = String(text || "").trim();
-  if (!spokenText) return;
+  if (!spokenText || !button) return;
   if (!authSession?.access_token) {
-    if (button) {
-      button.textContent = "Sign in to listen";
-      button.title = "Sign in to use NPC voice.";
-    }
+    button.textContent = "Sign in to listen";
+    button.title = "Sign in to use NPC voice.";
     showVoiceSignIn();
     return;
   }
 
-  let audio = null;
   let objectUrl = null;
-  if (button) {
-    button.disabled = true;
-    button.textContent = "Loading voice…";
-  }
+  button.disabled = true;
+  button.textContent = "Preparing voice…";
 
   try {
     const response = await fetch(AGENT_SPEECH_API_URL, {
@@ -1808,37 +1817,63 @@ async function speakTeacherReply(text, teacherId, button) {
     }
 
     const audioBlob = await response.blob();
-    if (!audioBlob.type.startsWith("audio/")) throw new Error("Voice service returned an invalid audio response");
+    if (!audioBlob.type.startsWith("audio/") || !audioBlob.size) {
+      throw new Error("Voice service returned an invalid audio response");
+    }
 
     stopTeacherVoice();
+    const previous = teacherVoiceAudio.get(button);
+    if (previous) URL.revokeObjectURL(previous.url);
     objectUrl = URL.createObjectURL(audioBlob);
-    audio = new Audio(objectUrl);
-    activeTeacherAudio = { audio, url: objectUrl };
-
-    const finish = () => {
-      if (activeTeacherAudio?.audio === audio) {
-        URL.revokeObjectURL(objectUrl);
-        activeTeacherAudio = null;
-      }
-      if (button) {
-        button.disabled = false;
-        button.textContent = "Listen";
-      }
-    };
-    audio.addEventListener("ended", finish, { once: true });
-    audio.addEventListener("error", finish, { once: true });
-    if (button) button.textContent = "Playing…";
-    await audio.play();
+    const audio = new Audio(objectUrl);
+    audio.preload = "auto";
+    teacherVoiceAudio.set(button, { audio, url: objectUrl, button });
+    button.disabled = false;
+    button.textContent = "Play reply";
+    button.title = "Tap to hear this reply.";
+    button.setAttribute("aria-label", `Play ${TEACHERS[teacherId]?.name || "NPC"} reply`);
   } catch (error) {
-    if (activeTeacherAudio?.audio === audio) stopTeacherVoice();
-    else if (objectUrl) URL.revokeObjectURL(objectUrl);
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
     console.warn("ElevenLabs NPC voice unavailable.", error);
-    if (button) {
-      button.disabled = false;
-      button.textContent = "Try voice again";
-      button.title = "Voice is unavailable. Check the Vercel setup and sign-in.";
-    }
+    button.disabled = false;
+    button.textContent = "Try voice again";
+    button.title = "Voice is unavailable. Check the Vercel setup and sign-in.";
   }
+}
+
+function speakTeacherReply(text, teacherId, button) {
+  if (!authSession?.access_token) {
+    button.textContent = "Sign in to listen";
+    button.title = "Sign in to use NPC voice.";
+    showVoiceSignIn();
+    return;
+  }
+
+  const prepared = teacherVoiceAudio.get(button);
+  if (!prepared) {
+    prepareTeacherReplyAudio(text, teacherId, button);
+    return;
+  }
+
+  stopTeacherVoice();
+  activeTeacherAudio = prepared;
+  prepared.audio.currentTime = 0;
+  button.disabled = true;
+  button.textContent = "Playing…";
+
+  const finish = () => {
+    if (activeTeacherAudio === prepared) activeTeacherAudio = null;
+    button.disabled = false;
+    button.textContent = "Play reply";
+  };
+  prepared.audio.addEventListener("ended", finish, { once: true });
+  prepared.audio.addEventListener("error", finish, { once: true });
+  prepared.audio.play().catch((error) => {
+    finish();
+    console.warn("NPC audio playback failed.", error);
+    button.textContent = "Play reply";
+    button.title = "Tap to try playing the prepared reply again.";
+  });
 }
 
 function openTeacherChat(teacherId) {
@@ -1856,6 +1891,7 @@ function openTeacherChat(teacherId) {
   teacherInputEl.setAttribute("aria-label", `Message ${teacher.name}`);
   teacherChatEl.classList.remove("hidden");
 
+  clearTeacherVoiceAudio();
   teacherMessagesEl.replaceChildren();
   teacherChatHistory[teacherId] = [];
   teacher.intro.forEach((line) => {
@@ -4132,7 +4168,7 @@ teacherFormEl.addEventListener("submit", async (e) => {
       result.taughtVocab ? [result.taughtVocab] : [],
       teacherId
     );
-    if (voiceButton) speakTeacherReply(result.reply, teacherId, voiceButton);
+    if (voiceButton) prepareTeacherReplyAudio(result.reply, teacherId, voiceButton);
     const shouldTeachFromReply = vocabProgress.responseCount >= vocabProgress.nextTeachAt;
     if (result.taughtVocab) {
       const learnedEntry = addAcquiredVocab(result.taughtVocab, teacher);
