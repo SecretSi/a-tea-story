@@ -1,6 +1,6 @@
 const vocabulary = require("../../data/tocfl-vocabulary.json");
 
-const PACK_SIZE = 100;
+const PACK_SIZE = 15;
 const TOTAL_PACKS = Math.ceil(vocabulary.length / PACK_SIZE);
 
 module.exports = function handler(req, res) {
@@ -20,9 +20,10 @@ module.exports = function handler(req, res) {
   const start = (requested - 1) * PACK_SIZE;
   const entries = vocabulary.slice(start, start + PACK_SIZE);
   const levels = [...new Set(entries.map((entry) => entry.levelName))];
-  const title = levels.length === 1
-    ? `TOCFL Pack ${String(requested).padStart(3, "0")} · ${levels[0]}`
-    : `TOCFL Pack ${String(requested).padStart(3, "0")} · Mixed levels`;
+  const cefrLevels = [...new Set(entries.map((entry) => entry.cefr))];
+  const title = cefrLevels.length === 1
+    ? `TOCFL ${cefrLevels[0]} Pack ${String(requested).padStart(3, "0")}`
+    : `TOCFL A1–B1 Pack ${String(requested).padStart(3, "0")}`;
 
   const words = entries.map((entry, index) => {
     const position = index + 1;
@@ -45,6 +46,7 @@ module.exports = function handler(req, res) {
       totalPacks: TOTAL_PACKS,
       totalWords: vocabulary.length,
       levels,
+      cefrLevels,
     },
     words,
   });
