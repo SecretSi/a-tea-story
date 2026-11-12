@@ -1821,6 +1821,7 @@ async function prepareTeacherReplyAudio(text, teacherId, button) {
       throw new Error("Voice service returned an invalid audio response");
     }
 
+    stopTeacherVoice();
     const previous = teacherVoiceAudio.get(button);
     if (previous) URL.revokeObjectURL(previous.url);
     objectUrl = URL.createObjectURL(audioBlob);
